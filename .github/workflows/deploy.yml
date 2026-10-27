@@ -1,14 +1,13 @@
 name: Deploy to GitHub Pages
 
 on:
-  workflow_run:
-    workflows: ['pages build and deployment']
-    types: [completed]
+  push:
     branches: [master]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -25,8 +24,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -39,6 +36,20 @@ jobs:
 
       - name: Build production bundle
         run: npm run build
+
+      - name: Wait for branch-based Pages deployment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in {1..60}; do
+            status="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&per_page=20" --jq '.workflow_runs | map(select(.name == "pages build and deployment")) | first | .status // "absent"')"
+            if [[ "$status" == "completed" || "$status" == "absent" ]]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Branch-based Pages deployment did not finish in time."
+          exit 1
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
