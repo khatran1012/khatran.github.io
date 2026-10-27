@@ -304,11 +304,11 @@ export const PressureSimulations: React.FC = () => {
                       maxHeight: '160px',
                       overflowY: 'auto',
                       padding: '0.85rem',
-                      background: '#050708',
+                      background: 'var(--bg-terminal)',
                       borderRadius: 'var(--radius-xs)',
                       fontSize: '0.74rem',
                       lineHeight: 1.6,
-                      color: 'var(--text-secondary)',
+                      color: 'var(--text-terminal)',
                     }}
                   >
                     {sim1Log.length === 0 ? (
@@ -509,7 +509,7 @@ export const PressureSimulations: React.FC = () => {
                       maxHeight: '120px',
                       overflowY: 'auto',
                       padding: '0.65rem',
-                      background: '#050708',
+                      background: 'var(--bg-terminal)',
                       borderRadius: 'var(--radius-xs)',
                       fontSize: '0.72rem',
                       color: 'var(--copper-warm-bright)',
@@ -567,12 +567,12 @@ export const PressureSimulations: React.FC = () => {
               <pre
                 style={{
                   padding: '1rem',
-                  background: '#07090b',
+                  background: 'var(--bg-terminal)',
                   fontSize: '0.76rem',
                   lineHeight: 1.5,
                   overflowX: 'auto',
                   fontFamily: 'var(--font-mono)',
-                  color: '#e5e0d8',
+                  color: 'var(--text-terminal)',
                 }}
               >
                 <code>{SIMULATION_SPECS[activeTab].codeSnippet}</code>

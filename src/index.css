@@ -55,6 +55,12 @@
   --radius-md: 10px;
   --radius-lg: 16px;
 
+  /* Semantic Section & Terminal Backgrounds */
+  --bg-canvas-alt: rgba(255, 255, 255, 0.02);
+  --bg-terminal: #07090b;
+  --bg-terminal-subtle: #0d1013;
+  --text-terminal: #e5e0d8;
+
   /* Elevations */
   --shadow-slab: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
   --shadow-patina: 0 10px 30px -10px rgba(50, 168, 149, 0.25);
@@ -68,29 +74,41 @@
 
 /* Light / Architectural Paper mode support */
 [data-theme='light'] {
-  --bg-canvas: #f6f3eb;
-  --bg-surface: #ede8dc;
-  --bg-surface-elevated: #e3ddcf;
-  --bg-surface-hover: #dad3c2;
-  --bg-card: rgba(237, 232, 220, 0.85);
-  --bg-glass: rgba(246, 243, 235, 0.9);
+  --bg-canvas: #f8f6f0;
+  --bg-canvas-alt: #f1ede3;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f3efe6;
+  --bg-surface-hover: #ebe5d9;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-glass: rgba(248, 246, 240, 0.92);
+  --bg-blueprint: rgba(241, 237, 227, 0.95);
+  --bg-terminal: #1e242a;
+  --bg-terminal-subtle: #171c21;
+  --text-terminal: #f8fafc;
 
-  --text-ivory: #171b1e;
-  --text-ivory-dim: #2b3136;
-  --text-secondary: #5a625b;
-  --text-tertiary: #848c85;
+  /* High-Contrast Readable Text for Light Mode */
+  --text-ivory: #0f1316;
+  --text-ivory-dim: #22282e;
+  --text-secondary: #3d454b;
+  --text-tertiary: #626c74;
+  --text-inverse: #ffffff;
 
-  --copper-patina: #1d7b6d;
-  --copper-patina-bright: #249180;
-  --copper-patina-glow: rgba(29, 123, 109, 0.15);
-  --copper-patina-subtle: rgba(29, 123, 109, 0.08);
+  /* Saturated, Crisp Patina and Copper for Light Mode */
+  --copper-patina: #156d60;
+  --copper-patina-bright: #0e564b;
+  --copper-patina-glow: rgba(21, 109, 96, 0.2);
+  --copper-patina-subtle: rgba(21, 109, 96, 0.09);
+  --copper-patina-border: rgba(21, 109, 96, 0.35);
 
-  --copper-warm: #a65832;
-  --copper-warm-bright: #bf6d43;
+  --copper-warm: #9c451e;
+  --copper-warm-bright: #843714;
+  --copper-warm-subtle: rgba(156, 69, 30, 0.1);
+  --copper-warm-border: rgba(156, 69, 30, 0.35);
 
-  --border-arch: rgba(23, 27, 30, 0.1);
-  --border-arch-subtle: rgba(23, 27, 30, 0.06);
-  --border-arch-hover: rgba(23, 27, 30, 0.22);
+  --border-arch: rgba(15, 19, 22, 0.12);
+  --border-arch-subtle: rgba(15, 19, 22, 0.07);
+  --border-arch-hover: rgba(15, 19, 22, 0.28);
+  --shadow-slab: 0 10px 25px -8px rgba(0, 0, 0, 0.1);
 }
 
 /* Base Reset */
@@ -376,6 +394,30 @@ a {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* 4-Block Artifacts Grid Layout */
+.artifacts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+@media (max-width: 1200px) {
+  .artifacts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .artifacts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section-alt {
+  background-color: var(--bg-canvas-alt);
 }
 
 /* Mobile Responsiveness */

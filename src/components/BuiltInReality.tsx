@@ -74,10 +74,10 @@ export const BuiltInReality: React.FC = () => {
   };
 
   return (
-    <section id="reality" className="section" style={{ backgroundColor: 'rgba(12, 15, 18, 0.4)' }}>
+    <section id="reality" className="section section-alt">
       <div className="container">
         {/* Section Header */}
-        <div style={{ marginBottom: '3.5rem' }}>
+        <div style={{ marginBottom: '3rem' }}>
           <div className="chapter-badge">
             <Building2 size={13} />
             <span>CHAPTER 04 // BUILT IN REALITY</span>
@@ -92,14 +92,8 @@ export const BuiltInReality: React.FC = () => {
           </p>
         </div>
 
-        {/* Exhibition Projects Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-            gap: '2rem',
-          }}
-        >
+        {/* 4-Block Exhibition Projects Grid (All 4 on One Row on Desktop) */}
+        <div className="artifacts-grid">
           {PROJECTS.filter((p) => p.featured).map((project, idx) => {
             const story = EXHIBITION_STORIES[project.id] || {
               problem: project.description,
@@ -114,10 +108,11 @@ export const BuiltInReality: React.FC = () => {
                 key={project.id}
                 className="arch-slab"
                 style={{
-                  padding: '2rem',
+                  padding: '1.4rem',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
+                  height: '100%',
                 }}
               >
                 <div>
@@ -127,13 +122,21 @@ export const BuiltInReality: React.FC = () => {
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      marginBottom: '1rem',
+                      marginBottom: '0.85rem',
+                      gap: '0.5rem',
                     }}
                   >
-                    <span className="arch-tag patina">
-                      EXHIBIT 0{idx + 1} // {project.company?.toUpperCase()}
+                    <span className="arch-tag patina" style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}>
+                      0{idx + 1} // {project.company?.toUpperCase()}
                     </span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.7rem',
+                        color: 'var(--text-tertiary)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {project.period}
                     </span>
                   </div>
@@ -142,10 +145,11 @@ export const BuiltInReality: React.FC = () => {
                   <h3
                     style={{
                       fontFamily: 'var(--font-editorial)',
-                      fontSize: '1.45rem',
+                      fontSize: '1.18rem',
                       color: 'var(--text-ivory)',
                       lineHeight: 1.25,
-                      marginBottom: '0.4rem',
+                      marginBottom: '0.35rem',
+                      minHeight: '2.9rem',
                     }}
                   >
                     {project.title}
@@ -154,10 +158,14 @@ export const BuiltInReality: React.FC = () => {
                   <div
                     style={{
                       fontFamily: 'var(--font-mono)',
-                      fontSize: '0.8rem',
+                      fontSize: '0.74rem',
                       color: 'var(--copper-warm-bright)',
-                      marginBottom: '1.25rem',
+                      marginBottom: '1rem',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}
+                    title={project.subtitle}
                   >
                     {project.subtitle}
                   </div>
@@ -168,18 +176,19 @@ export const BuiltInReality: React.FC = () => {
                       background: 'var(--bg-canvas)',
                       border: '1px solid var(--border-arch)',
                       borderRadius: 'var(--radius-sm)',
-                      padding: '1rem',
-                      marginBottom: '1.25rem',
-                      fontSize: '0.88rem',
+                      padding: '0.85rem',
+                      marginBottom: '1rem',
+                      fontSize: '0.82rem',
                       color: 'var(--text-secondary)',
-                      lineHeight: 1.6,
+                      lineHeight: 1.5,
+                      minHeight: '85px',
                     }}
                   >
                     <strong
                       style={{
                         display: 'block',
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '0.72rem',
+                        fontSize: '0.68rem',
                         color: 'var(--copper-patina)',
                         textTransform: 'uppercase',
                         marginBottom: '0.2rem',
@@ -187,23 +196,24 @@ export const BuiltInReality: React.FC = () => {
                     >
                       Problem Anatomy:
                     </strong>
-                    {story.problem}
+                    {story.problem.length > 130 ? `${story.problem.slice(0, 130)}...` : story.problem}
                   </div>
 
                   {/* Measured Outcome */}
                   <div
                     style={{
                       borderLeft: '2px solid var(--copper-patina)',
-                      paddingLeft: '0.85rem',
-                      marginBottom: '1.5rem',
-                      fontSize: '0.85rem',
+                      paddingLeft: '0.75rem',
+                      marginBottom: '1.1rem',
+                      fontSize: '0.8rem',
                       color: 'var(--text-ivory)',
+                      minHeight: '62px',
                     }}
                   >
                     <strong
                       style={{
                         fontFamily: 'var(--font-mono)',
-                        fontSize: '0.7rem',
+                        fontSize: '0.66rem',
                         color: 'var(--copper-patina)',
                         textTransform: 'uppercase',
                         display: 'block',
@@ -211,33 +221,33 @@ export const BuiltInReality: React.FC = () => {
                     >
                       Measured Outcome:
                     </strong>
-                    {story.results}
+                    {story.results.length > 105 ? `${story.results.slice(0, 105)}...` : story.results}
                   </div>
 
                   {/* Tech Stack Pills */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.5rem' }}>
-                    {project.technologies.slice(0, 5).map((t) => (
-                      <span key={t} className="arch-tag" style={{ fontSize: '0.7rem' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '1.25rem' }}>
+                    {project.technologies.slice(0, 3).map((t) => (
+                      <span key={t} className="arch-tag" style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}>
                         {t}
                       </span>
                     ))}
-                    {project.technologies.length > 5 && (
-                      <span className="arch-tag" style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                        +{project.technologies.length - 5} more
+                    {project.technologies.length > 3 && (
+                      <span className="arch-tag" style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', padding: '0.15rem 0.45rem' }}>
+                        +{project.technologies.length - 3}
                       </span>
                     )}
                   </div>
                 </div>
 
                 {/* Inspect Case Study Button */}
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <button
                     onClick={() => setSelectedProject(project)}
                     className="btn-arch btn-arch-outline"
-                    style={{ flex: 1, padding: '0.55rem 1rem', fontSize: '0.84rem' }}
+                    style={{ flex: 1, padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
                   >
-                    <span>Inspect Case Study</span>
-                    <ArrowUpRight size={15} />
+                    <span>Inspect Case</span>
+                    <ArrowUpRight size={14} />
                   </button>
                   {project.domain && (
                     <a
@@ -245,11 +255,11 @@ export const BuiltInReality: React.FC = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-arch btn-arch-outline"
-                      style={{ padding: '0.55rem 0.85rem' }}
+                      style={{ padding: '0.5rem 0.65rem' }}
                       title="Visit Live Domain"
                       aria-label="Visit Live Domain"
                     >
-                      <ExternalLink size={15} />
+                      <ExternalLink size={14} />
                     </a>
                   )}
                 </div>

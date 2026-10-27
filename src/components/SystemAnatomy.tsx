@@ -12,7 +12,7 @@ export const SystemAnatomy: React.FC = () => {
     EXHIBITION_LAYERS.find((l) => l.id === activeLayerId) || EXHIBITION_LAYERS[0];
 
   return (
-    <section id="system" className="section" style={{ backgroundColor: 'rgba(12, 15, 18, 0.6)' }}>
+    <section id="system" className="section section-alt">
       <div className="container">
         {/* Section Header */}
         <div style={{ marginBottom: '3.5rem' }}>
@@ -140,22 +140,31 @@ export const SystemAnatomy: React.FC = () => {
               onSelectLayer={setActiveLayerId}
               explosionFactor={explosionFactor}
             />
-            {/* Direct Hint */}
+            {/* Clean Non-Overlapping Status Bar */}
             <div
               style={{
                 position: 'absolute',
-                bottom: '1rem',
-                left: '1.25rem',
+                bottom: '0.85rem',
+                left: '1rem',
+                right: '1rem',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.72rem',
-                color: 'var(--text-tertiary)',
+                color: 'var(--text-secondary)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
+                justifyContent: 'space-between',
+                padding: '0.35rem 0.75rem',
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-arch)',
+                borderRadius: 'var(--radius-xs)',
+                pointerEvents: 'none',
               }}
             >
-              <Activity size={13} color="var(--copper-patina)" />
-              <span>Click slabs or drag to rotate 3D view</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Activity size={13} color="var(--copper-patina)" />
+                <span style={{ fontWeight: 600 }}>Axonometric Stack</span>
+              </div>
+              <span style={{ color: 'var(--text-tertiary)' }}>Click slabs or adjust slider</span>
             </div>
           </div>
 

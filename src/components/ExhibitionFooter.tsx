@@ -12,7 +12,7 @@ export const ExhibitionFooter: React.FC = () => {
     <footer
       style={{
         borderTop: '1px solid var(--border-arch)',
-        backgroundColor: '#07090a',
+        backgroundColor: 'var(--bg-surface)',
         paddingTop: '3.5rem',
         paddingBottom: '3.5rem',
         position: 'relative',

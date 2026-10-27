@@ -278,20 +278,6 @@ export const LayeredAnatomy3D: React.FC<LayeredAnatomy3DProps> = ({
           );
         })}
       </div>
-
-      {/* Direct Interactive Guide */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '0.75rem',
-          left: '1rem',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.72rem',
-          color: 'var(--text-tertiary)',
-        }}
-      >
-        <span>[AXONOMETRIC DECONSTRUCTION] // CLICK ANY SLAB</span>
-      </div>
     </div>
   );
 };

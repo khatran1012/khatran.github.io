@@ -35,8 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
         left: 0,
         right: 0,
         zIndex: 90,
-        backgroundColor: scrolled ? 'var(--bg-glass)' : 'rgba(11, 13, 15, 0.4)',
-        backdropFilter: 'blur(12px)',
+        backgroundColor: scrolled ? 'var(--bg-glass)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(12px)' : 'none',
         borderBottom: `1px solid ${scrolled ? 'var(--border-arch)' : 'transparent'}`,
         transition: 'all var(--trans-fast)',
       }}
