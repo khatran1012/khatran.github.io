@@ -25,7 +25,7 @@ export const Hero: React.FC = () => {
               transition={{ delay: 0.2, duration: 0.6 }}
             >
               <span className="status-dot" />
-              <span>Fullstack Developer • High-Concurrency &amp; IoT</span>
+              <span>Software Engineer • High-Concurrency &amp; IoT</span>
             </motion.div>
 
             {/* Title */}

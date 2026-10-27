@@ -36,10 +36,20 @@ export interface EducationItem {
   isCertificate?: boolean;
 }
 
+export interface SkillItem {
+  name: string;
+  tag?: string;
+}
+
+export interface SkillCategory {
+  name: string;
+  skills: SkillItem[];
+}
+
 export const PERSONAL_INFO = {
   name: 'Kha Tran',
   fullName: 'Trần Đình Kha',
-  role: 'Senior Software Engineer & Fullstack Developer',
+  role: 'Software Engineer',
   email: 'khatran1012@gmail.com',
   phone: '0326004229',
   displayPhone: '+84 326 004 229',
@@ -75,52 +85,52 @@ export const STRENGTHS: Strength[] = [
   },
 ];
 
-export const SKILL_CATEGORIES = [
+export const SKILL_CATEGORIES: SkillCategory[] = [
   {
     name: 'Frontend Development',
     skills: [
-      { name: 'React.js', level: 95 },
-      { name: 'TypeScript', level: 92 },
-      { name: 'Next.js', level: 88 },
-      { name: 'Angular (v14+)', level: 85 },
-      { name: 'Redux / NgRx / RxJS', level: 90 },
-      { name: 'Tailwind CSS / Vanilla CSS', level: 95 },
-      { name: 'Three.js / 3D WebGL', level: 78 },
-      { name: 'A11y (WCAG) & Technical SEO', level: 92 },
-      { name: 'PWA (React Native Web)', level: 82 },
+      { name: 'React.js', tag: 'Architecture & Ecosystem' },
+      { name: 'TypeScript', tag: 'Type-Safe Engineering' },
+      { name: 'Next.js', tag: 'SSR / SSG & SEO' },
+      { name: 'Angular (v14+)', tag: 'RxJS & Services' },
+      { name: 'Redux / NgRx / RxJS', tag: 'Complex State Management' },
+      { name: 'Tailwind CSS / Vanilla CSS', tag: 'Responsive Design Systems' },
+      { name: 'Three.js / 3D WebGL', tag: 'Interactive Experiences' },
+      { name: 'A11y (WCAG) & Technical SEO', tag: 'International Standards' },
+      { name: 'PWA (React Native Web)', tag: 'Cross-Platform Web Apps' },
     ],
   },
   {
     name: 'Backend & Microservices',
     skills: [
-      { name: 'Golang (Gin, SQLC)', level: 90 },
-      { name: 'PostgreSQL', level: 88 },
-      { name: 'Redis (Distributed Lock)', level: 88 },
-      { name: 'RabbitMQ', level: 84 },
-      { name: 'RESTful API & OpenAPI / Swagger', level: 94 },
-      { name: 'ACID & Anti-fraud Systems', level: 86 },
-      { name: '.NET Blazor / Razor Pages', level: 75 },
+      { name: 'Golang (Gin, SQLC)', tag: 'High-Concurrency APIs' },
+      { name: 'PostgreSQL', tag: 'Schema & Query Optimization' },
+      { name: 'Redis (Distributed Lock)', tag: 'Concurrency & Caching' },
+      { name: 'RabbitMQ', tag: 'Event-Driven Messaging' },
+      { name: 'RESTful API & OpenAPI / Swagger', tag: 'Contract-First Endpoints' },
+      { name: 'ACID & Anti-fraud Systems', tag: 'Strict Transaction Guarantees' },
+      { name: '.NET Blazor / Razor Pages', tag: 'Enterprise Web Integration' },
     ],
   },
   {
     name: 'IoT & Edge Architecture',
     skills: [
-      { name: 'MQTT Protocol', level: 92 },
-      { name: 'Offline-First Edge Gateways', level: 90 },
-      { name: 'Hardware Control (Turnstiles / Scanners)', level: 88 },
-      { name: 'Local Edge Caching & Auto-Sync', level: 90 },
-      { name: 'Distributed Concurrency Control', level: 86 },
+      { name: 'MQTT Protocol', tag: 'Lightweight IoT Messaging' },
+      { name: 'Offline-First Edge Gateways', tag: 'Local Caching & Auto-Sync' },
+      { name: 'Hardware Control (Turnstiles / Scanners)', tag: 'Physical Access Control' },
+      { name: 'Local Edge Caching & Auto-Sync', tag: '100% Operation Uptime' },
+      { name: 'Distributed Concurrency Control', tag: 'SELECT FOR UPDATE & Locks' },
     ],
   },
   {
     name: 'DevOps & CMS Ecosystem',
     skills: [
-      { name: 'Docker & Containerization', level: 85 },
-      { name: 'Nginx & SSL Configuration', level: 88 },
-      { name: 'AWS / Linode / Vercel', level: 82 },
-      { name: 'Adobe Experience Manager (AEM)', level: 85 },
-      { name: 'Shopify (Liquid & Admin API)', level: 86 },
-      { name: 'Umbraco / Drupal / Moodle', level: 80 },
+      { name: 'Docker & Containerization', tag: 'Microservices Deployment' },
+      { name: 'Nginx & SSL Configuration', tag: 'Reverse Proxy & Security' },
+      { name: 'AWS / Linode / Vercel', tag: 'Cloud Hosting & CI/CD' },
+      { name: 'Adobe Experience Manager (AEM)', tag: 'Modular Enterprise CMS' },
+      { name: 'Shopify (Liquid & Admin API)', tag: 'Custom E-Commerce Stores' },
+      { name: 'Umbraco / Drupal / Moodle', tag: 'Enterprise CMS & LMS' },
     ],
   },
 ];

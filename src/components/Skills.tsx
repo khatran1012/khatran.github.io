@@ -131,7 +131,7 @@ export const Skills: React.FC = () => {
           ))}
         </div>
 
-        {/* Animated Skill Meters */}
+        {/* Skill Cards Grid (No arbitrary percentages or progress bars) */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeCategory}
@@ -142,37 +142,53 @@ export const Skills: React.FC = () => {
             transition={{ duration: 0.35 }}
           >
             {SKILL_CATEGORIES[activeCategory].skills.map((skill) => (
-              <div key={skill.name} className="cyber-card" style={{ padding: '1.25rem 1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.96rem' }}>
+              <motion.div
+                key={skill.name}
+                className="cyber-card"
+                whileHover={{ y: -3, scale: 1.02 }}
+                style={{
+                  padding: '1.25rem 1.4rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.75rem',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: 'var(--cyber-emerald-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '1px solid var(--border-glow)',
+                      flexShrink: 0,
+                    }}
+                  >
                     <CheckCircle2 size={16} color="var(--cyber-emerald)" />
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
                     {skill.name}
                   </span>
-                  <span style={{ fontFamily: "'Fira Code', monospace", fontSize: '0.85rem', color: 'var(--cyber-emerald)', fontWeight: 600 }}>
-                    {skill.level}%
-                  </span>
                 </div>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '6px',
-                    borderRadius: '3px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${skill.level}%` }}
-                    transition={{ duration: 0.8, ease: 'easeOut' }}
+
+                {skill.tag && (
+                  <span
+                    className="pill pill-emerald"
                     style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, var(--cyber-emerald), var(--neon-blue))',
-                      boxShadow: '0 0 10px rgba(0, 245, 160, 0.5)',
+                      fontSize: '0.75rem',
+                      fontFamily: "'Fira Code', monospace",
+                      fontWeight: 600,
                     }}
-                  />
-                </div>
-              </div>
+                  >
+                    {skill.tag}
+                  </span>
+                )}
+              </motion.div>
             ))}
           </motion.div>
         </AnimatePresence>

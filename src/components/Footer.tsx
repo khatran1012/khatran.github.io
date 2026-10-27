@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
                     textTransform: 'uppercase',
                   }}
                 >
-                  Software Engineer &amp; Fullstack Developer
+                  Software Engineer
                 </span>
               </div>
             </div>
