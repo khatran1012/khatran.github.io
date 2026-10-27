@@ -9,5 +9,15 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
+          'motion-vendor': ['framer-motion', 'gsap'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1200,
   },
 });

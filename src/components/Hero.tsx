@@ -1,36 +1,67 @@
 import React from 'react';
-import { ArrowRight, Mail, MapPin, ShieldCheck, Terminal } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Mail, Terminal, ShieldCheck } from 'lucide-react';
 import { PERSONAL_INFO } from '../data/cvData';
 import { GithubIcon, LinkedinIcon } from './Icons';
+import { WorkspaceCanvas } from './canvas/WorkspaceCanvas';
 
 export const Hero: React.FC = () => {
   return (
     <section id="hero" className="hero-section">
-      <div className="hero-background-gradient" />
       <div className="container">
         <div className="hero-grid">
-          {/* Left Column: Intro */}
-          <div className="hero-content">
-            <div className="hero-status-pill">
+          {/* Left Column: Narrative & CTA */}
+          <motion.div
+            className="hero-content"
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {/* Status Pill */}
+            <motion.div
+              className="hero-status-pill"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+            >
               <span className="status-dot" />
-              <span>Fullstack &amp; IoT Edge Systems Specialist</span>
-            </div>
+              <span>Fullstack Developer • High-Concurrency &amp; IoT</span>
+            </motion.div>
 
-            <h1 className="hero-title">
+            {/* Title */}
+            <motion.h1
+              className="hero-title"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.7 }}
+            >
               Hi, I'm <span className="gradient-text">{PERSONAL_INFO.name}</span>
               <br />
               <span className="hero-role-badge">{PERSONAL_INFO.role}</span>
-            </h1>
+            </motion.h1>
 
-            <p className="hero-bio">
-              Bridging high-performance <strong>React &amp; TypeScript</strong> frontends with resilient, 
-              high-concurrency <strong>Golang</strong> microservices and <strong>Offline-First IoT edge gateways</strong>.
-              Delivering secure, scalable, and user-centered digital solutions.
-            </p>
+            {/* Bio */}
+            <motion.p
+              className="hero-bio"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.7 }}
+            >
+              Engineering end-to-end digital solutions—from responsive, highly interactive{' '}
+              <strong>React &amp; TypeScript</strong> frontends to resilient, high-concurrency{' '}
+              <strong>Golang</strong> microservices and <strong>Offline-First IoT edge gateways</strong>.
+            </motion.p>
 
-            <div className="hero-cta-group">
+            {/* CTA Buttons */}
+            <motion.div
+              className="hero-cta-group"
+              style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.7 }}
+            >
               <a href="#projects" className="btn btn-primary">
-                <span>View Projects</span>
+                <span>Explore Projects</span>
                 <ArrowRight size={18} />
               </a>
 
@@ -60,10 +91,15 @@ export const Hero: React.FC = () => {
               >
                 <GithubIcon size={20} />
               </a>
-            </div>
+            </motion.div>
 
-            {/* Quick Stats Grid */}
-            <div className="hero-stats-row">
+            {/* Stats Row */}
+            <motion.div
+              className="hero-stats-row"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.7 }}
+            >
               <div className="stat-item">
                 <span className="stat-value">8+</span>
                 <span className="stat-label">Years Experience</span>
@@ -76,67 +112,42 @@ export const Hero: React.FC = () => {
                 <span className="stat-value">100%</span>
                 <span className="stat-label">IoT Turnstile Uptime</span>
               </div>
-            </div>
-          </div>
+            </motion.div>
 
-          {/* Right Column: Profile Avatar Card */}
-          <div className="hero-visual">
-            <div className="avatar-card-wrapper">
-              <div className="avatar-glow" />
-              <div className="avatar-card">
-                <div className="avatar-img-container">
-                  <img
-                    src={PERSONAL_INFO.avatarUrl}
-                    alt="Kha Tran - Senior Software Engineer"
-                    className="avatar-img"
-                    width={200}
-                    height={200}
-                  />
-                </div>
+            {/* Architectural Tags */}
+            <motion.div
+              style={{
+                display: 'flex',
+                gap: '1.25rem',
+                fontSize: '0.84rem',
+                color: 'var(--text-muted)',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                marginTop: '0.5rem',
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <ShieldCheck size={16} color="var(--cyber-emerald)" />
+                Strict ACID &amp; Anti-Fraud
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Terminal size={16} color="var(--neon-blue)" />
+                MQTT Offline-First Edge
+              </span>
+            </motion.div>
+          </motion.div>
 
-                <div className="avatar-info">
-                  <h2 className="avatar-name">{PERSONAL_INFO.name}</h2>
-                  <div className="avatar-title">{PERSONAL_INFO.fullName}</div>
-                  
-                  <div className="avatar-location">
-                    <MapPin size={15} color="var(--emerald-primary)" />
-                    <span>{PERSONAL_INFO.location}</span>
-                  </div>
-
-                  <div className="avatar-chips">
-                    <span className="pill pill-emerald">React / TS</span>
-                    <span className="pill pill-blue">Golang / Gin</span>
-                    <span className="pill">MQTT &amp; IoT</span>
-                    <span className="pill">PostgreSQL</span>
-                    <span className="pill">Redis Locks</span>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    marginTop: '1.25rem',
-                    paddingTop: '1rem',
-                    borderTop: '1px solid var(--border-color)',
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.82rem',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <ShieldCheck size={16} color="var(--emerald-primary)" />
-                    ACID &amp; Anti-Fraud
-                  </span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Terminal size={16} color="var(--blue-accent)" />
-                    Clean Architecture
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Right Column: Interactive 3D Developer Workspace */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <WorkspaceCanvas />
+          </motion.div>
         </div>
       </div>
     </section>

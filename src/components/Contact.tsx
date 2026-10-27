@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Globe, Send, Copy, Check, MessageSquare } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Copy, Check, MessageSquare, Terminal } from 'lucide-react';
 import { PERSONAL_INFO } from '../data/cvData';
 import { GithubIcon, LinkedinIcon } from './Icons';
 
@@ -22,14 +22,13 @@ export const Contact: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
-    
-    // Construct mailto link
+
     const mailtoUrl = `mailto:${PERSONAL_INFO.email}?subject=${encodeURIComponent(
       formData.subject || `Inquiry from ${formData.name} via Portfolio`
     )}&body=${encodeURIComponent(
       `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
     )}`;
-    
+
     window.location.href = mailtoUrl;
     setSubmitted(true);
     setTimeout(() => setSubmitted(false), 5000);
@@ -38,33 +37,48 @@ export const Contact: React.FC = () => {
   return (
     <section id="contact" className="section">
       <div className="container">
+        {/* Section Header */}
         <div className="section-header">
           <div className="section-badge">
-            <MessageSquare size={14} />
-            <span>Get In Touch</span>
+            <MessageSquare size={13} />
+            <span>05 — CONTACT / MINIMAL 2D CTA</span>
           </div>
           <h2 className="section-title">
-            Let's <span>Connect</span>
+            Let's <span>Collaborate</span>
           </h2>
           <p className="section-subtitle">
-            Whether you have a technical project inquiry, architectural discussion, or career opportunity, I'd love to hear from you.
+            Clean 2D developer interface for fast, frictionless communication and technical inquiries.
           </p>
         </div>
 
         <div className="contact-grid">
-          {/* Left: Contact Info Cards */}
+          {/* Left: Contact Info HUD */}
           <div className="contact-info-list">
             {/* Email */}
-            <div className="contact-card-item">
-              <div className="contact-icon">
-                <Mail size={22} />
+            <div className="cyber-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--cyber-emerald-subtle)',
+                  color: 'var(--cyber-emerald)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--border-glow)',
+                  flexShrink: 0,
+                }}
+              >
+                <Mail size={20} />
               </div>
-              <div className="contact-details" style={{ flex: 1 }}>
-                <span className="contact-label">Email Address</span>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontFamily: "'Fira Code', monospace" }}>
+                  Primary Email
+                </span>
                 <a
                   href={`mailto:${PERSONAL_INFO.email}`}
-                  className="contact-value"
-                  style={{ color: 'var(--text-primary)' }}
+                  style={{ display: 'block', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}
                 >
                   {PERSONAL_INFO.email}
                 </a>
@@ -75,21 +89,35 @@ export const Contact: React.FC = () => {
                 title="Copy email to clipboard"
                 aria-label="Copy email"
               >
-                {copied === 'email' ? <Check size={18} color="var(--emerald-primary)" /> : <Copy size={18} />}
+                {copied === 'email' ? <Check size={18} color="var(--cyber-emerald)" /> : <Copy size={18} />}
               </button>
             </div>
 
             {/* Phone */}
-            <div className="contact-card-item">
-              <div className="contact-icon" style={{ backgroundColor: 'var(--blue-light)', color: 'var(--blue-accent)' }}>
-                <Phone size={22} />
+            <div className="cyber-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  backgroundColor: 'var(--neon-blue-subtle)',
+                  color: 'var(--neon-blue)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid var(--border-blue-glow)',
+                  flexShrink: 0,
+                }}
+              >
+                <Phone size={20} />
               </div>
-              <div className="contact-details" style={{ flex: 1 }}>
-                <span className="contact-label">Direct Phone</span>
+              <div style={{ flex: 1 }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontFamily: "'Fira Code', monospace" }}>
+                  Direct Phone
+                </span>
                 <a
                   href={`tel:${PERSONAL_INFO.phone}`}
-                  className="contact-value"
-                  style={{ color: 'var(--text-primary)' }}
+                  style={{ display: 'block', fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}
                 >
                   {PERSONAL_INFO.displayPhone}
                 </a>
@@ -100,43 +128,68 @@ export const Contact: React.FC = () => {
                 title="Copy phone to clipboard"
                 aria-label="Copy phone"
               >
-                {copied === 'phone' ? <Check size={18} color="var(--emerald-primary)" /> : <Copy size={18} />}
+                {copied === 'phone' ? <Check size={18} color="var(--cyber-emerald)" /> : <Copy size={18} />}
               </button>
             </div>
 
             {/* Location */}
-            <div className="contact-card-item">
-              <div className="contact-icon">
-                <MapPin size={22} />
+            <div className="cyber-card" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem' }}>
+              <div
+                style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '12px',
+                  backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                  color: 'var(--neon-purple)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                  flexShrink: 0,
+                }}
+              >
+                <MapPin size={20} />
               </div>
-              <div className="contact-details">
-                <span className="contact-label">Location</span>
-                <span className="contact-value">{PERSONAL_INFO.location}</span>
+              <div>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontFamily: "'Fira Code', monospace" }}>
+                  Based In
+                </span>
+                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {PERSONAL_INFO.location}
+                </div>
               </div>
             </div>
 
-            {/* Website / GitHub / LinkedIn */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '1rem',
-                marginTop: '0.5rem',
-              }}
-            >
+            {/* Social Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <a
                 href={PERSONAL_INFO.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="contact-card-item"
-                style={{ padding: '1rem' }}
+                className="cyber-card"
+                style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
               >
-                <div className="contact-icon" style={{ width: '40px', height: '40px', backgroundColor: 'var(--blue-light)', color: 'var(--blue-accent)' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    backgroundColor: 'var(--neon-blue-subtle)',
+                    color: 'var(--neon-blue)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <LinkedinIcon size={18} />
                 </div>
-                <div className="contact-details">
-                  <span className="contact-label">LinkedIn</span>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>/in/khatran1012</span>
+                <div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    LinkedIn
+                  </div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    /in/khatran1012
+                  </div>
                 </div>
               </a>
 
@@ -144,139 +197,129 @@ export const Contact: React.FC = () => {
                 href={PERSONAL_INFO.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="contact-card-item"
-                style={{ padding: '1rem' }}
+                className="cyber-card"
+                style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}
               >
-                <div className="contact-icon" style={{ width: '40px', height: '40px', backgroundColor: 'var(--bg-subtle)', color: 'var(--text-primary)' }}>
+                <div
+                  style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    color: 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <GithubIcon size={18} />
                 </div>
-                <div className="contact-details">
-                  <span className="contact-label">GitHub</span>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>/khatran1012</span>
+                <div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    GitHub
+                  </div>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    /khatran1012
+                  </div>
                 </div>
               </a>
             </div>
-
-            {/* GitHub Pages Domain Banner */}
-            <div
-              style={{
-                padding: '1.25rem',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--emerald-light)',
-                border: '1px solid var(--emerald-border)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-              }}
-            >
-              <Globe size={22} color="var(--emerald-primary)" style={{ flexShrink: 0 }} />
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--emerald-primary)', textTransform: 'uppercase' }}>
-                  CV Portfolio Domain
-                </div>
-                <a
-                  href={PERSONAL_INFO.website}
-                  style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    color: 'var(--text-primary)',
-                    wordBreak: 'break-all',
-                  }}
-                >
-                  {PERSONAL_INFO.website}
-                </a>
-              </div>
-            </div>
           </div>
 
-          {/* Right: Message Form */}
-          <form className="contact-form" onSubmit={handleSubmit}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Send a Direct Message
-            </h3>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="contact-name">
-                Your Name *
-              </label>
-              <input
-                id="contact-name"
-                type="text"
-                required
-                className="form-input"
-                placeholder="e.g. Sarah Connor"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+          {/* Right: Minimal 2D Message Form */}
+          <form className="cyber-card" onSubmit={handleSubmit} style={{ padding: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <Terminal size={18} color="var(--cyber-emerald)" />
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Direct Transmission
+              </h3>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="contact-email">
-                Your Email *
-              </label>
-              <input
-                id="contact-email"
-                type="email"
-                required
-                className="form-input"
-                placeholder="e.g. sarah@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="contact-subject">
-                Subject
-              </label>
-              <input
-                id="contact-subject"
-                type="text"
-                className="form-input"
-                placeholder="Project discussion / Fullstack role / Collaboration"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="contact-message">
-                Message *
-              </label>
-              <textarea
-                id="contact-message"
-                required
-                rows={5}
-                className="form-textarea"
-                placeholder="Write your message here..."
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              />
-            </div>
-
-            <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
-              <Send size={18} />
-              <span>Send Message</span>
-            </button>
-
-            {submitted && (
-              <div
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: 'var(--emerald-light)',
-                  color: 'var(--emerald-primary)',
-                  fontWeight: 600,
-                  fontSize: '0.88rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                }}
-              >
-                <Check size={18} />
-                <span>Message composer launched! Thank you for reaching out.</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="minimal-name" style={{ fontSize: '0.82rem', fontFamily: "'Fira Code', monospace" }}>
+                  name: <span style={{ color: 'var(--cyber-emerald)' }}>*</span>
+                </label>
+                <input
+                  id="minimal-name"
+                  type="text"
+                  required
+                  className="form-input"
+                  placeholder="e.g. Alex Vance"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
-            )}
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="minimal-email" style={{ fontSize: '0.82rem', fontFamily: "'Fira Code', monospace" }}>
+                  email: <span style={{ color: 'var(--cyber-emerald)' }}>*</span>
+                </label>
+                <input
+                  id="minimal-email"
+                  type="email"
+                  required
+                  className="form-input"
+                  placeholder="e.g. alex@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="minimal-subject" style={{ fontSize: '0.82rem', fontFamily: "'Fira Code', monospace" }}>
+                  subject:
+                </label>
+                <input
+                  id="minimal-subject"
+                  type="text"
+                  className="form-input"
+                  placeholder="Project Inquiry / High-Concurrency Architecture"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="minimal-message" style={{ fontSize: '0.82rem', fontFamily: "'Fira Code', monospace" }}>
+                  message: <span style={{ color: 'var(--cyber-emerald)' }}>*</span>
+                </label>
+                <textarea
+                  id="minimal-message"
+                  required
+                  rows={4}
+                  className="form-textarea"
+                  placeholder="State your technical requirements or message..."
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ marginTop: '0.5rem' }}>
+                <Send size={16} />
+                <span>Execute Transmission</span>
+              </button>
+
+              {submitted && (
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'var(--cyber-emerald-subtle)',
+                    color: 'var(--cyber-emerald)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    border: '1px solid var(--border-glow)',
+                  }}
+                >
+                  <Check size={16} />
+                  <span>Transmission prepared. Thank you for connecting!</span>
+                </div>
+              )}
+            </div>
           </form>
         </div>
       </div>
