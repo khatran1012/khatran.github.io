@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useLoader } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -50,6 +50,16 @@ export const SculptureCanvas: React.FC = () => {
   const [hasWebGL, setHasWebGL] = useState(false);
   const [mobile, setMobile] = useState(false);
   const [rotation, setRotation] = useState<[number, number, number]>([0.06, -0.2, 0]);
+  const drag = useRef<{ pointerId: number; x: number; y: number } | null>(null);
+  const rotateWithKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+    event.preventDefault();
+    setRotation(([x, y, z]) => [
+      Math.max(-Math.PI / 3, Math.min(Math.PI / 3, x + (event.key === 'ArrowUp' ? -0.15 : event.key === 'ArrowDown' ? 0.15 : 0))),
+      y + (event.key === 'ArrowLeft' ? -0.15 : event.key === 'ArrowRight' ? 0.15 : 0),
+      z,
+    ]);
+  };
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 768px)');
@@ -76,15 +86,7 @@ export const SculptureCanvas: React.FC = () => {
           gl={{ antialias: true, alpha: true }}
           aria-label="Manchester United 3D crest. Drag to rotate, or use the arrow keys when focused."
           tabIndex={0}
-          onKeyDown={(event) => {
-            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
-            event.preventDefault();
-            setRotation(([x, y, z]) => [
-              Math.max(-Math.PI / 3, Math.min(Math.PI / 3, x + (event.key === 'ArrowUp' ? -0.15 : event.key === 'ArrowDown' ? 0.15 : 0))),
-              y + (event.key === 'ArrowLeft' ? -0.15 : event.key === 'ArrowRight' ? 0.15 : 0),
-              z,
-            ]);
-          }}
+          onKeyDown={rotateWithKeyboard}
         >
           <ambientLight intensity={1.5} />
           <directionalLight position={[4, 3, 5]} intensity={3} />
@@ -94,9 +96,49 @@ export const SculptureCanvas: React.FC = () => {
           <OrbitControls makeDefault enablePan={false} enableZoom={false} enableDamping={false} />
         </Canvas>
       ) : (
-        <img src={CREST_URL} alt="Manchester United Football Club crest" width="296" height="300" style={{ width: 'min(78%, 360px)', height: 'auto', maxHeight: '90%', objectFit: 'contain' }} />
+        <div
+          className="club-crest-fallback"
+          tabIndex={0}
+          role="group"
+          aria-label="Manchester United 3D crest. Drag to rotate, or use the arrow keys when focused."
+          onKeyDown={rotateWithKeyboard}
+          onDragStart={(event) => event.preventDefault()}
+          onPointerDown={(event) => {
+            if (event.button !== 0 || drag.current) return;
+            event.preventDefault();
+            event.currentTarget.focus();
+            event.currentTarget.setPointerCapture(event.pointerId);
+            drag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+          }}
+          onPointerMove={(event) => {
+            const previous = drag.current;
+            if (!previous || previous.pointerId !== event.pointerId) return;
+            const dx = event.clientX - previous.x;
+            const dy = event.clientY - previous.y;
+            drag.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+            setRotation(([x, y, z]) => [
+              Math.max(-Math.PI / 3, Math.min(Math.PI / 3, x - dy * 0.01)),
+              y + dx * 0.01,
+              z,
+            ]);
+          }}
+          onPointerUp={(event) => {
+            if (drag.current?.pointerId !== event.pointerId) return;
+            drag.current = null;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => { drag.current = null; }}
+          onLostPointerCapture={() => { drag.current = null; }}
+        >
+          <div className="club-crest-css-model" style={{ transform: `rotateX(${rotation[0]}rad) rotateY(${rotation[1]}rad)` }}>
+            {Array.from({ length: 9 }, (_, index) => (
+              <img key={index} src={CREST_URL} alt="" aria-hidden="true" draggable={false}
+                style={{ transform: `translateZ(${index - 4}px)`, filter: index > 0 && index < 8 ? 'brightness(0.35)' : undefined }} />
+            ))}
+          </div>
+        </div>
       )}
-      <p className="club-crest-caption">MANCHESTER UNITED <span>{hasWebGL ? 'Drag to rotate · Scroll to explore' : 'Football Club'}</span></p>
+      <p className="club-crest-caption">MANCHESTER UNITED <span>Drag to rotate · Arrow keys supported</span></p>
     </div>
   );
 };
