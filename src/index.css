@@ -502,3 +502,10 @@ footer a span { min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 768px) {
   .club-crest-css-model { --crest-layer-step: 1px; width: min(72%, 230px); }
 }
+
+.club-crest-color-toggle { position: absolute; top: 0.75rem; right: 0.75rem; z-index: 2; display: inline-flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0.45rem 0.75rem; border: 1px solid var(--border-arch-hover); border-radius: var(--radius-sm); background: var(--bg-glass); color: var(--text-ivory); font-family: var(--font-mono); font-size: 0.7rem; cursor: pointer; }
+.club-crest-color-toggle:hover { border-color: var(--copper-patina); }
+
+@media (max-width: 768px) {
+  .club-crest-color-toggle { top: 0.25rem; right: 0.25rem; min-height: 36px; }
+}
