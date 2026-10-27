@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://khatran1012.github.io/khatran.github.io/sitemap.xml
