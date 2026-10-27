@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowDown, Download, Layers, ShieldCheck, Cpu } from 'lucide-react';
-import { PERSONAL_INFO } from '../data/cvData';
+import { PERSONAL_INFO, EXPERIENCES } from '../data/cvData';
 import { SculptureCanvas } from './canvas/SculptureCanvas';
 
 export const OriginHero: React.FC = () => {
@@ -11,7 +11,7 @@ export const OriginHero: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
             gap: '3.5rem',
             alignItems: 'center',
           }}
@@ -26,6 +26,11 @@ export const OriginHero: React.FC = () => {
             <div className="chapter-badge">
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--copper-patina)' }} />
               <span>CHAPTER 01 // THE ORIGIN</span>
+            </div>
+
+            <div className="candidate-identity">
+              <p>{PERSONAL_INFO.name}</p>
+              <span>Fullstack Software Engineer</span>
             </div>
 
             {/* Exhibition Monolithic Title */}
@@ -67,12 +72,11 @@ export const OriginHero: React.FC = () => {
               }}
             >
               <p style={{ color: 'var(--text-ivory)', fontWeight: 600, marginBottom: '0.5rem' }}>
-                Software is not transient syntax. It is an enduring, engineered anatomy.
+                I build interfaces people understand and systems designed for unreliable conditions.
               </p>
               <p>
-                From deterministic frontend projection loops (React, TypeScript) to resilient,
-                high-concurrency microservices and offline-first IoT edge hardware (Golang, PostgreSQL, MQTT).
-                Built to withstand real network collapse and scale under contention.
+                React and TypeScript interfaces, Golang services, and offline-first IoT gateways.
+                Explore the decisions behind the work, from browser state to physical access control.
               </p>
             </div>
 
@@ -98,10 +102,10 @@ export const OriginHero: React.FC = () => {
               <div className="arch-slab" style={{ padding: '0.85rem 1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--copper-warm-bright)', marginBottom: '0.2rem' }}>
                   <ShieldCheck size={15} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textTransform: 'uppercase' }}>Uptime</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', textTransform: 'uppercase' }}>Approach</span>
                 </div>
                 <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-ivory)' }}>
-                  100% Edge Offline
+                  Offline-first Systems
                 </div>
               </div>
 
@@ -118,8 +122,8 @@ export const OriginHero: React.FC = () => {
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <a href="#system" className="btn-arch btn-arch-patina">
-                <span>Enter The Exhibition</span>
+              <a href="#reality" className="btn-arch btn-arch-patina">
+                <span>Explore My Work</span>
                 <ArrowDown size={17} />
               </a>
               <a
@@ -133,14 +137,14 @@ export const OriginHero: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Column: 3D Monolithic Abstract Sculpture */}
+          {/* Right Column: Manchester United crest */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'relative',
-              height: '520px',
+              height: 'var(--hero-sculpture-height)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -148,6 +152,19 @@ export const OriginHero: React.FC = () => {
           >
             <SculptureCanvas />
           </motion.div>
+        </div>
+        <div className="career-snapshot" aria-label="Career snapshot">
+          <div className="career-label">CAREER SNAPSHOT <span>Experience across product, services &amp; enterprise teams</span></div>
+          <div className="career-grid">
+            {EXPERIENCES.map((experience) => (
+              <article key={experience.id}>
+                <p className="career-period">{experience.period}</p>
+                <h2>{experience.company}</h2>
+                <p className="career-role">{experience.role}</p>
+                <p>{experience.summary}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>

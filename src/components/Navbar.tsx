@@ -10,6 +10,17 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeChapter, setActiveChapter] = useState('#origin');
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) setActiveChapter(`#${entry.target.id}`);
+      });
+    }, { rootMargin: '-15% 0px -65% 0px' });
+    document.querySelectorAll('main > section[id]').forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
         left: 0,
         right: 0,
         zIndex: 90,
-        backgroundColor: scrolled ? 'var(--bg-glass)' : 'transparent',
+        backgroundColor: scrolled || mobileMenuOpen ? 'var(--bg-glass)' : 'transparent',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         borderBottom: `1px solid ${scrolled ? 'var(--border-arch)' : 'transparent'}`,
         transition: 'all var(--trans-fast)',
@@ -120,6 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
               <a
                 key={ch.num}
                 href={ch.href}
+                aria-current={activeChapter === ch.href ? 'location' : undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -164,7 +176,8 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
             <a
               href={PERSONAL_INFO.cvPdfUrl}
               download="Kha_Tran_Software_Engineer_CV.pdf"
-              className="btn-arch btn-arch-patina"
+              className="btn-arch btn-arch-patina nav-resume"
+              aria-label="Download CV (PDF)"
               style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}
             >
               <Download size={15} />
@@ -187,6 +200,8 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
               }}
               className="mobile-chapters-toggle"
               aria-label="Toggle Exhibition Chapters"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-chapters"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -195,7 +210,9 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
 
         {/* Mobile Chapters Dropdown */}
         {mobileMenuOpen && (
-          <div
+          <nav
+            id="mobile-chapters"
+            aria-label="Mobile exhibition chapters"
             style={{
               padding: '1.25rem 0',
               borderTop: '1px solid var(--border-arch)',
@@ -208,6 +225,7 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
               <a
                 key={ch.num}
                 href={ch.href}
+                aria-current={activeChapter === ch.href ? 'location' : undefined}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -223,7 +241,7 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
                 <span>{ch.label}</span>
               </a>
             ))}
-          </div>
+          </nav>
         )}
       </div>
 

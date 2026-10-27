@@ -26,7 +26,7 @@ export const SystemAnatomy: React.FC = () => {
           <p className="chapter-desc">
             A software system is not a flat file of code. It is an exploded stack of
             interdependent planes—from the physical edge turnstile to the deterministic interface.
-            Rotate, explode, and inspect the engineering decisions governing each layer.
+            Select a slab or adjust the spacing to inspect the engineering decisions behind each layer.
           </p>
         </div>
 
@@ -62,6 +62,7 @@ export const SystemAnatomy: React.FC = () => {
                 <button
                   key={layer.id}
                   onClick={() => setActiveLayerId(layer.id)}
+                  aria-pressed={isSelected}
                   style={{
                     padding: '0.4rem 0.85rem',
                     borderRadius: 'var(--radius-xs)',
@@ -98,7 +99,7 @@ export const SystemAnatomy: React.FC = () => {
               style={{
                 accentColor: 'var(--copper-patina)',
                 cursor: 'pointer',
-                width: '120px',
+                width: 'clamp(60px, 20vw, 120px)',
               }}
             />
             <span
@@ -118,7 +119,7 @@ export const SystemAnatomy: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
             gap: '2.5rem',
             alignItems: 'center',
           }}
@@ -141,7 +142,7 @@ export const SystemAnatomy: React.FC = () => {
               explosionFactor={explosionFactor}
             />
             {/* Clean Non-Overlapping Status Bar */}
-            <div
+            <div className="anatomy-status"
               style={{
                 position: 'absolute',
                 bottom: '0.85rem',
@@ -183,7 +184,7 @@ export const SystemAnatomy: React.FC = () => {
               }}
             >
               {/* Layer Title & Number */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
                 <span className="arch-tag patina">
                   PLANE {activeLayer.number} // {activeLayer.slabLabel}
                 </span>

@@ -110,7 +110,7 @@ export const LayeredAnatomy3D: React.FC<LayeredAnatomy3DProps> = ({
       <div
         style={{
           position: 'relative',
-          width: '320px',
+          width: 'min(100%, 320px)',
           height: '240px',
           display: 'flex',
           alignItems: 'center',
@@ -128,6 +128,16 @@ export const LayeredAnatomy3D: React.FC<LayeredAnatomy3DProps> = ({
           return (
             <div
               key={layer.id}
+              role="button"
+              tabIndex={0}
+              aria-label={`Select ${layer.slabLabel} layer`}
+              aria-pressed={isSelected}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onSelectLayer(layer.id);
+                }
+              }}
               onClick={() => onSelectLayer(layer.id)}
               onMouseEnter={() => setHoveredId(layer.id)}
               onMouseLeave={() => setHoveredId(null)}
@@ -231,7 +241,7 @@ export const LayeredAnatomy3D: React.FC<LayeredAnatomy3DProps> = ({
                 </svg>
 
                 {/* Architectural Callout Pointer & Label (Matching User Diagram) */}
-                <div
+                <div className="slab-callout"
                   style={{
                     position: 'absolute',
                     top: '44px',

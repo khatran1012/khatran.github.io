@@ -1,259 +1,102 @@
-import React, { useRef, useState, useEffect, Suspense } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Float } from '@react-three/drei';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
+import { Canvas, useLoader } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 
-// Monolithic abstract architectural core forming from modular blocks
-const ArchitecturalSculpture: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) => {
-  const rootGroupRef = useRef<THREE.Group>(null);
-  const coreRef = useRef<THREE.Mesh>(null);
-  const ringRef = useRef<THREE.Group>(null);
+const CREST_URL = './manchester-united.svg';
 
-  useFrame((state) => {
-    if (!rootGroupRef.current) return;
-
-    if (!reducedMotion) {
-      // Magnetic cursor tracking with smooth lerp
-      const targetY = (state.pointer.x * Math.PI) / 6;
-      const targetX = (-state.pointer.y * Math.PI) / 10 + 0.1;
-
-      rootGroupRef.current.rotation.y = THREE.MathUtils.lerp(
-        rootGroupRef.current.rotation.y,
-        targetY,
-        0.04
-      );
-      rootGroupRef.current.rotation.x = THREE.MathUtils.lerp(
-        rootGroupRef.current.rotation.x,
-        targetX,
-        0.04
-      );
-
-      // Slow orbital precession
-      if (ringRef.current) {
-        ringRef.current.rotation.z += 0.003;
-        ringRef.current.rotation.x += 0.001;
+const ManchesterUnitedCrest: React.FC<{ rotation: [number, number, number] }> = ({ rotation }) => {
+  const svg = useLoader(SVGLoader, CREST_URL);
+  // Keep image and vector loader cache keys distinct.
+  const texture = useLoader(THREE.TextureLoader, `${CREST_URL}?texture`);
+  const geometries = useMemo(() => svg.paths
+    .filter((path) => (path.userData?.style as { fill?: string } | undefined)?.fill !== 'none')
+    .flatMap((path) => path.toShapes())
+    .map((shape) => {
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth: 9,
+        bevelEnabled: false,
+        curveSegments: 20,
+        steps: 1,
+      });
+      // Project the original crest onto both faces; the rim has its own material.
+      const positions = geometry.getAttribute('position');
+      const uv = geometry.getAttribute('uv');
+      for (let index = 0; index < positions.count; index++) {
+        uv.setXY(index, positions.getX(index) / 296.14334, 1 - positions.getY(index) / 300);
       }
+      return geometry;
+    }), [svg]);
 
-      // Breathing assembly pulse
-      if (coreRef.current) {
-        coreRef.current.rotation.y += 0.005;
-      }
-    }
-  });
+  useEffect(() => () => geometries.forEach((geometry) => geometry.dispose()), [geometries]);
+  texture.colorSpace = THREE.SRGBColorSpace;
 
   return (
-    <group ref={rootGroupRef} position={[0, 0, 0]} scale={1.15}>
-      {/* Central Monolithic Polyhedron */}
-      <mesh ref={coreRef} position={[0, 0, 0]}>
-        <octahedronGeometry args={[1.35, 0]} />
-        <meshPhysicalMaterial
-          color="#161a1d"
-          roughness={0.25}
-          metalness={0.85}
-          clearcoat={0.6}
-          clearcoatRoughness={0.15}
-          wireframe={false}
-        />
-      </mesh>
-
-      {/* Wireframe Outline of Core */}
-      <mesh position={[0, 0, 0]}>
-        <octahedronGeometry args={[1.36, 0]} />
-        <meshBasicMaterial
-          color="#32a895"
-          wireframe={true}
-          transparent={true}
-          opacity={0.35}
-        />
-      </mesh>
-
-      {/* Interlocking Structural Floating Slabs */}
-      {/* Slab Top: Design & Surface */}
-      <group position={[0, 1.45, 0]}>
-        <mesh rotation={[0.2, 0.4, 0]}>
-          <boxGeometry args={[1.8, 0.08, 1.8]} />
-          <meshStandardMaterial color="#1a2024" roughness={0.3} metalness={0.8} />
-        </mesh>
-        <mesh rotation={[0.2, 0.4, 0]}>
-          <boxGeometry args={[1.81, 0.09, 1.81]} />
-          <meshBasicMaterial color="#32a895" wireframe={true} transparent opacity={0.4} />
-        </mesh>
+    <group rotation={rotation} scale={[0.012, -0.012, 0.012]}>
+      <group position={[-148.07167, -150, -4.5]}>
+        {geometries.map((geometry, index) => (
+          <mesh key={index} geometry={geometry} position={[0, 0, index * 0.005]}>
+            <meshBasicMaterial attach="material-0" map={texture} transparent alphaTest={0.1} toneMapped={false} side={THREE.DoubleSide} />
+            <meshStandardMaterial attach="material-1" color="#a11920" metalness={0.5} roughness={0.35} side={THREE.DoubleSide} />
+          </mesh>
+        ))}
       </group>
-
-      {/* Slab Mid-Lower: Logic & State */}
-      <group position={[0.4, -0.6, 0.2]}>
-        <mesh rotation={[-0.15, 0.8, 0.1]}>
-          <boxGeometry args={[1.5, 0.07, 1.5]} />
-          <meshStandardMaterial color="#1f262a" roughness={0.3} metalness={0.7} />
-        </mesh>
-        <mesh rotation={[-0.15, 0.8, 0.1]}>
-          <boxGeometry args={[1.51, 0.08, 1.51]} />
-          <meshBasicMaterial color="#c47a53" wireframe={true} transparent opacity={0.5} />
-        </mesh>
-      </group>
-
-      {/* Slab Bottom: Persistence & Substrate */}
-      <group position={[-0.2, -1.5, -0.1]}>
-        <mesh rotation={[0.1, -0.5, -0.05]}>
-          <boxGeometry args={[2.0, 0.08, 2.0]} />
-          <meshStandardMaterial color="#15191c" roughness={0.4} metalness={0.9} />
-        </mesh>
-        <mesh rotation={[0.1, -0.5, -0.05]}>
-          <boxGeometry args={[2.02, 0.09, 2.02]} />
-          <meshBasicMaterial color="#32a895" wireframe={true} transparent opacity={0.3} />
-        </mesh>
-      </group>
-
-      {/* Architectural Dashed Construction Orbits */}
-      <group ref={ringRef}>
-        <mesh rotation={[Math.PI / 3, 0, 0]}>
-          <ringGeometry args={[2.4, 2.42, 64]} />
-          <meshBasicMaterial color="#32a895" transparent opacity={0.25} side={THREE.DoubleSide} />
-        </mesh>
-        <mesh rotation={[-Math.PI / 4, Math.PI / 6, 0]}>
-          <ringGeometry args={[2.8, 2.82, 64]} />
-          <meshBasicMaterial color="#c47a53" transparent opacity={0.2} side={THREE.DoubleSide} />
-        </mesh>
-      </group>
-
-      {/* Subtle Coordinate Crosshair Nodes */}
-      {[
-        [-1.6, 0.8, 0.5],
-        [1.7, -0.9, -0.4],
-        [0.2, 1.9, -0.8],
-        [-0.8, -1.8, 0.9],
-      ].map((pos, idx) => (
-        <mesh key={idx} position={pos as [number, number, number]}>
-          <sphereGeometry args={[0.045, 12, 12]} />
-          <meshBasicMaterial color={idx % 2 === 0 ? '#32a895' : '#c47a53'} />
-        </mesh>
-      ))}
-
-      {/* Architectural Lighting */}
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 8, 4]} intensity={1.8} color="#f5f2eb" />
-      <pointLight position={[-4, -3, -2]} intensity={1.2} color="#32a895" />
-      <pointLight position={[3, -4, 3]} intensity={1.0} color="#c47a53" />
     </group>
   );
 };
 
 export const SculptureCanvas: React.FC = () => {
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [hasWebGL, setHasWebGL] = useState(true);
+  const [hasWebGL, setHasWebGL] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const [rotation, setRotation] = useState<[number, number, number]>([0.06, -0.2, 0]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handler);
-
-    // Test WebGL support safely
+    const media = window.matchMedia('(max-width: 768px)');
+    const updateMobile = () => setMobile(media.matches);
+    updateMobile();
+    media.addEventListener('change', updateMobile);
     try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) setHasWebGL(false);
+      const gl = document.createElement('canvas').getContext('webgl2');
+      setHasWebGL(Boolean(gl));
+      gl?.getExtension('WEBGL_lose_context')?.loseContext();
     } catch {
       setHasWebGL(false);
     }
-
-    return () => mediaQuery.removeEventListener('change', handler);
+    return () => media.removeEventListener('change', updateMobile);
   }, []);
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        minHeight: '440px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {/* Architectural Drafting Watermark Grid */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          backgroundImage:
-            'radial-gradient(circle at 50% 50%, rgba(50, 168, 149, 0.08) 0%, transparent 70%)',
-        }}
-      />
-
-      {/* Telemetry Coordinate Badges */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '1.25rem',
-          right: '1.25rem',
-          fontFamily: 'var(--font-mono)',
-          fontSize: '0.72rem',
-          color: 'var(--text-tertiary)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          gap: '0.2rem',
-          pointerEvents: 'none',
-          zIndex: 2,
-        }}
-      >
-        <span>COORD // 10.77°N, 106.69°E</span>
-        <span style={{ color: 'var(--copper-patina)' }}>STRUCTURE // MONOLITHIC</span>
-        <span>STATUS // FORMING</span>
-      </div>
-
+    <div className="club-crest-viewer">
       {hasWebGL ? (
         <Canvas
-          camera={{ position: [0, 0, 5.8], fov: 42 }}
-          dpr={[1, 2]}
+          camera={{ position: [0, 0, 6.5], fov: 42 }}
+          dpr={mobile ? 1 : [1, 1.5]}
+          frameloop="demand"
           gl={{ antialias: true, alpha: true }}
-          style={{ width: '100%', height: '100%' }}
-        >
-          <Suspense fallback={null}>
-            <Float
-              speed={reducedMotion ? 0 : 1.5}
-              rotationIntensity={reducedMotion ? 0 : 0.3}
-              floatIntensity={reducedMotion ? 0 : 0.5}
-            >
-              <ArchitecturalSculpture reducedMotion={reducedMotion} />
-            </Float>
-          </Suspense>
-        </Canvas>
-      ) : (
-        /* Accessible 2D Architectural Monolith Fallback */
-        <div
-          style={{
-            width: '260px',
-            height: '260px',
-            borderRadius: '16px',
-            background: 'var(--bg-surface)',
-            border: '1px solid var(--copper-patina-border)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '1rem',
-            padding: '1.5rem',
-            textAlign: 'center',
+          aria-label="Manchester United 3D crest. Drag to rotate, or use the arrow keys when focused."
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+            event.preventDefault();
+            setRotation(([x, y, z]) => [
+              Math.max(-Math.PI / 3, Math.min(Math.PI / 3, x + (event.key === 'ArrowUp' ? -0.15 : event.key === 'ArrowDown' ? 0.15 : 0))),
+              y + (event.key === 'ArrowLeft' ? -0.15 : event.key === 'ArrowRight' ? 0.15 : 0),
+              z,
+            ]);
           }}
         >
-          <div
-            style={{
-              width: '60px',
-              height: '60px',
-              border: '2px solid var(--copper-patina)',
-              transform: 'rotate(45deg)',
-              background: 'var(--copper-patina-subtle)',
-            }}
-          />
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            [ARCHITECTURAL CORE]
-          </div>
-        </div>
+          <ambientLight intensity={1.5} />
+          <directionalLight position={[4, 3, 5]} intensity={3} />
+          <Suspense fallback={null}>
+            <ManchesterUnitedCrest rotation={rotation} />
+          </Suspense>
+          <OrbitControls makeDefault enablePan={false} enableZoom={false} enableDamping={false} />
+        </Canvas>
+      ) : (
+        <img src={CREST_URL} alt="Manchester United Football Club crest" width="296" height="300" style={{ width: 'min(78%, 360px)', height: 'auto', maxHeight: '90%', objectFit: 'contain' }} />
       )}
+      <p className="club-crest-caption">MANCHESTER UNITED <span>{hasWebGL ? 'Drag to rotate · Scroll to explore' : 'Football Club'}</span></p>
     </div>
   );
 };

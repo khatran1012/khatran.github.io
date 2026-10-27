@@ -70,7 +70,6 @@ export interface SimulationSpec {
   problemSummary: string;
   vulnerableExplanation: string;
   solutionExplanation: string;
-  codeSnippet: string;
   keyMetric: string;
 }
 
@@ -81,12 +80,12 @@ export const EXHIBITION_LAYERS: ArchitecturalLayer[] = [
     name: 'SURFACE & INTERACTION',
     slabLabel: 'DESIGN',
     title: 'Visual Projection & Deterministic UI',
-    description: 'Interface as a pure, deterministic projection of state. Sub-16ms interaction loops, physical animation momentum, and inclusive WCAG 2.1 AA accessibility.',
+    description: 'Interface as a pure, deterministic projection of state. Responsive interactions, purposeful motion, and accessibility informed by WCAG guidance.',
     technologies: ['React 18/19', 'TypeScript', 'Tailwind CSS', 'WebGL / Three.js', 'Framer Motion', 'WCAG AA A11y'],
-    architecturalRole: 'Renders complex interfaces while guaranteeing sub-frame latency and zero layout shifts (CLS < 0.02).',
+    architecturalRole: 'Renders complex interfaces with a focus on predictable state and stable layouts.',
     engineeringRationale: 'Eliminate component state fragmentation by enforcing single-source-of-truth stores and CSS custom variable design tokens.',
     tradeoffs: 'Client-side rich reactivity vs initial bundle weight. Mitigated through aggressive route-based code-splitting and asset streaming.',
-    metrics: '<16ms Frame Time • 100% Lighthouse A11y',
+    metrics: 'Focus: responsiveness & accessibility',
     color: '#32a895', // Oxidized Copper / Verdigris
     heightOffset: 2.2,
   },
@@ -101,7 +100,7 @@ export const EXHIBITION_LAYERS: ArchitecturalLayer[] = [
     architecturalRole: 'Orchestrates concurrent user inputs, websocket push events, and asynchronous HTTP calls without stale state corruption.',
     engineeringRationale: 'Treat state as immutable streams rather than mutable variables, preventing cascading re-renders and impossible state combinations.',
     tradeoffs: 'Higher cognitive overhead vs guaranteed predictability. Chosen because multi-step financial and ticketing flows cannot tolerate transient desync.',
-    metrics: '0 Unhandled Race Conditions • Monotonic Event Flow',
+    metrics: 'Focus: stale response protection',
     color: '#42bba8',
     heightOffset: 1.1,
   },
@@ -111,12 +110,12 @@ export const EXHIBITION_LAYERS: ArchitecturalLayer[] = [
     name: 'BOUNDARY & PROTOCOLS',
     slabLabel: 'BRIDGE',
     title: 'Network Perimeter & Protocol Contracts',
-    description: 'Strong contract boundaries using lightweight serialization. Sub-millisecond routing, strict request validation, and resilient edge broker tunnels.',
+    description: 'Strong contract boundaries using lightweight serialization. Explicit request validation and resilient edge broker connections.',
     technologies: ['Golang Gin', 'MQTT v3.1.1/v5', 'OpenAPI / Swagger', 'WebSocket', 'RESTful API', 'Protocol Buffers'],
-    architecturalRole: 'Enforces type-safe boundaries between untrusted client traffic and internal backend services, routing requests at microsecond speeds.',
+    architecturalRole: 'Enforces type-safe boundaries between untrusted client traffic and internal backend services.',
     engineeringRationale: 'Compile-time OpenAPI contracts and Go struct decoders catch schema mismatches at the edge before hitting database pools.',
     tradeoffs: 'Strict contract rigidity vs rapid schema prototyping. Chose contract-first engineering to allow OTA partners (Klook, Traveloka) flawless integration.',
-    metrics: '<12ms API Overhead • 100% Contract Compliance',
+    metrics: 'Focus: validated API contracts',
     color: '#c47a53', // Warm Raw Copper
     heightOffset: 0,
   },
@@ -128,10 +127,10 @@ export const EXHIBITION_LAYERS: ArchitecturalLayer[] = [
     title: 'ACID Transactions & Anti-Fraud Locking',
     description: 'Deterministic consistency under peak contention. Row-level pessimistic locks, Redis distributed leases, and fraud prevention engines.',
     technologies: ['PostgreSQL', 'SQLC (Type-Safe SQL)', 'Redis (Distributed Lock)', 'RabbitMQ', 'ACID Transactions'],
-    architecturalRole: 'Guarantees absolute data consistency (0 double-spending, 0 inventory oversell) during concurrent flash-sales and gate entries.',
+    architecturalRole: 'Uses transactions and row locks to protect ticket consumption and inventory updates under contention.',
     engineeringRationale: 'Combine fast distributed Redis mutexes for quick perimeter rejection with PostgreSQL `SELECT FOR UPDATE` for bulletproof transactional truth.',
     tradeoffs: 'High lock serialization reduces theoretical throughput. Balanced with sub-millisecond atomic lock release and optimized index paths.',
-    metrics: '0 Double-Spends • 100% Transaction Integrity',
+    metrics: 'Focus: transactional integrity',
     color: '#de8e65',
     heightOffset: -1.1,
   },
@@ -143,10 +142,10 @@ export const EXHIBITION_LAYERS: ArchitecturalLayer[] = [
     title: 'Offline-First IoT & Hardware Interfacing',
     description: 'Autonomous edge controllers directly driving physical turnstiles, optical barcode scanners, and barrier gates without cloud dependency.',
     technologies: ['Linux Edge Gateways', 'Local SQLite Cache', 'MQTT Edge Sync', 'RS485 / Relays', 'QR & Barcode Scanners', 'Docker'],
-    architecturalRole: 'Maintains 100% physical turnstile access availability even during severed central cloud WAN connectivity.',
+    architecturalRole: 'Supports local access decisions during WAN loss when valid ticket snapshots are available.',
     engineeringRationale: 'Edge gateways store pre-signed cryptographic validation keys locally and record gate entries to a local Write-Ahead-Log for automatic cloud sync upon reconnection.',
-    tradeoffs: 'Eventual consistency latency upon reconnect vs uninterrupted physical passage. Zero park attendee can ever be locked out due to internet drops.',
-    metrics: '100% Hardware Uptime • <10ms Turnstile Open Signal',
+    tradeoffs: 'Delayed reconciliation trades immediate global consistency for local availability. Independent offline gateways need ticket partitioning or shared coordination to prevent duplicate use.',
+    metrics: 'Focus: offline operation & replay',
     color: '#38b2ac',
     heightOffset: -2.2,
   },
@@ -158,28 +157,10 @@ export const SIMULATION_SPECS: SimulationSpec[] = [
     number: 'SIM 01',
     title: 'API Race Condition & Stale Packet Elimination',
     category: 'Frontend State Architecture',
-    problemSummary: 'Rapid user keystrokes trigger requests A and B. Request A encounters network delay (800ms) while Request B resolves quickly (200ms). Without protection, Request A resolves last, overwriting the UI with stale data.',
+    problemSummary: 'Rapid user keystrokes trigger requests A and B. By default, request A takes 750ms and request B takes 250ms, starting 100ms later. Change their delays to compare completion orders. Without protection, Request A resolves last, overwriting the UI with stale data.',
     vulnerableExplanation: 'Standard `useEffect` or unmanaged promises resolve indiscriminately in arrival order, causing subtle, hard-to-reproduce bugs in search and filter interfaces.',
-    solutionExplanation: 'Utilizing `AbortController` combined with monotonic request sequence tokens. Obsolete network requests are aborted at the browser socket level, and any in-flight promises are safely discarded.',
-    codeSnippet: `// Robust Race Condition Shield
-useEffect(() => {
-  const controller = new AbortController();
-  const requestId = ++latestRequestId.current;
-
-  fetchResults(query, { signal: controller.signal })
-    .then((data) => {
-      // Discard if a newer request has already fired
-      if (requestId === latestRequestId.current) {
-        setResults(data);
-      }
-    })
-    .catch((err) => {
-      if (err.name !== 'AbortError') handleNetworkError(err);
-    });
-
-  return () => controller.abort(); // Cancel previous socket!
-}, [query]);`,
-    keyMetric: '0 Stale Renders • Socket-level Cancellation',
+    solutionExplanation: 'Compare two independent strategies: AbortController cancels the delayed mock request; Request ID allows completion but ignores results from older requests. This demo uses promises and timers rather than a network API.',
+    keyMetric: 'Real promises • Configurable latency',
   },
   {
     id: 'sim-distributed-lock',
@@ -188,33 +169,8 @@ useEffect(() => {
     category: 'Backend & Data Integrity',
     problemSummary: 'Two visitors attempt to scan the exact same QR ticket at Turnstile Gate 1 and Gate 2 within 4 milliseconds of each other during peak festival admission.',
     vulnerableExplanation: 'Naive "read-then-update" patterns allow both concurrent threads to see ticket status as "UNUSED" simultaneously, resulting in double-spending and loss of gate security.',
-    solutionExplanation: 'Enforcing a Redis distributed mutex combined with PostgreSQL row-level `SELECT FOR UPDATE`. Thread 1 acquires the atomic lock, validates and marks the ticket "USED", releasing the lock in <8ms. Thread 2 immediately receives a rejection.',
-    codeSnippet: `// Golang Distributed Lock with Row-Level Lock
-func (s *GateService) ValidateTicket(ctx context.Context, ticketCode string) error {
-    lockKey := fmt.Sprintf("lock:ticket:%s", ticketCode)
-    acquired := s.redis.SetNX(ctx, lockKey, workerID, 2*time.Second).Val()
-    if !acquired {
-        return ErrConcurrentValidationBlocked
-    }
-    defer s.redis.Del(ctx, lockKey)
-
-    tx, _ := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelReadCommitted})
-    defer tx.Rollback()
-
-    // Row-level lock prevents any DB-level collision
-    var status string
-    err := tx.QueryRowContext(ctx, 
-        "SELECT status FROM tickets WHERE code = $1 FOR UPDATE", 
-        ticketCode).Scan(&status)
-    
-    if status != "UNUSED" {
-        return ErrTicketAlreadyConsumed
-    }
-    
-    _, err = tx.ExecContext(ctx, "UPDATE tickets SET status = 'USED', used_at = NOW() WHERE code = $1", ticketCode)
-    return tx.Commit()
-}`,
-    keyMetric: 'Zero Double-Spend • <12ms Mutex Resolution',
+    solutionExplanation: 'Conceptual model: PostgreSQL SELECT FOR UPDATE serializes consumption in a transaction. Redis can provide an optional early rejection lease; it needs a unique ownership token and atomic compare-and-delete release. A lease expiring must never replace database enforcement.',
+    keyMetric: 'Conceptual • Serialized consumption',
   },
   {
     id: 'sim-edge-offline',
@@ -223,23 +179,8 @@ func (s *GateService) ValidateTicket(ctx context.Context, ticketCode string) err
     category: 'IoT & Edge Architecture',
     problemSummary: 'The physical amusement park suffers a sudden optical fiber WAN severed link. 1,000 visitors are actively waiting in line at the turnstiles.',
     vulnerableExplanation: 'Cloud-dependent access systems freeze immediately, locking physical turnstiles, halting queues, and creating mass crowd distress.',
-    solutionExplanation: 'The Edge Gateway runs an autonomous daemon with local SQLite cache containing HMAC-signed ticket validity rules. Turnstiles validate and open in <10ms. Transactions are queued in an append-only Write-Ahead Log (WAL) and auto-synced via MQTT upon WAN recovery.',
-    codeSnippet: `// Edge Gateway Offline Fallback Routine
-func (gw *EdgeGateway) ProcessScan(barcode string) ScanResult {
-    if !gw.isCloudConnected() {
-        // Instant fallback to local cryptographic & SQLite engine
-        verified, ticket := gw.localCache.VerifyHMAC(barcode)
-        if verified && !ticket.LocallyUsed {
-            gw.hardware.TriggerRelayPulse(300 * time.Millisecond) // OPEN GATE
-            gw.wal.AppendEntry(ticket.ID, time.Now().UnixNano())
-            return ScanResultApprovedOffline
-        }
-        return ScanResultRejected
-    }
-    // Normal online path with background WAL drain
-    return gw.cloudRelay.Verify(barcode)
-}`,
-    keyMetric: '100% Gate Uptime • 0 Lost Transactions',
+    solutionExplanation: 'Conceptual design: validate the signed ticket snapshot and its expiry, then atomically mark local usage and persist an outbox event before requesting the relay. Replay with stable event IDs and central deduplication after acknowledgement. Independent offline gateways cannot guarantee global single-use without partitioning tickets or shared coordination. A relay failure after commit requires reconciliation; it must not silently make the ticket reusable.',
+    keyMetric: 'Conceptual • Persist before actuation',
   },
 ];
 
@@ -315,7 +256,7 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
       { name: 'MQTT Protocol', tag: 'Lightweight IoT Messaging' },
       { name: 'Offline-First Edge Gateways', tag: 'Local Caching & Auto-Sync' },
       { name: 'Hardware Control (Turnstiles / Scanners)', tag: 'Physical Access Control' },
-      { name: 'Local Edge Caching & Auto-Sync', tag: '100% Operation Uptime' },
+      { name: 'Local Edge Caching & Auto-Sync', tag: 'Offline operation' },
       { name: 'Distributed Concurrency Control', tag: 'SELECT FOR UPDATE & Locks' },
     ],
   },
@@ -343,7 +284,7 @@ export const EXPERIENCES: Experience[] = [
     responsibilities: [
       'Architected and implemented high-throughput backend services and IoT edge gateways in Golang (Gin, SQLC), processing concurrent ticket orders and real-time physical access control.',
       'Built resilient microservices capable of processing high-volume ticket transactions while enforcing strict ACID guarantees and anti-fraud protections.',
-      'Designed an Offline-First IoT edge gateway synchronization mechanism via MQTT and edge caching, guaranteeing 100% gate operation uptime during central server network interruptions.',
+      'Designed an Offline-First IoT edge gateway synchronization mechanism via MQTT and edge caching, supporting local gate operation during central server network interruptions.',
       'Implemented distributed locking via Redis and row-level database transactions (SELECT FOR UPDATE) to prevent double-spending and inventory overselling during flash sales.',
       'Built public-facing OpenAPI/REST integration endpoints for major OTA channels (Klook, Traveloka...) and developed operational portals using React, TypeScript, and Ant Design.',
     ],
@@ -418,7 +359,7 @@ export const PROJECTS: Project[] = [
     highlights: [
       'Architected and implemented high-throughput backend services and IoT edge gateways in Golang (Gin, SQLC), processing concurrent ticket orders and real-time physical access control.',
       'Built resilient microservices capable of processing high-volume ticket transactions while enforcing strict ACID guarantees and anti-fraud protections.',
-      'Designed an Offline-First IoT edge gateway synchronization mechanism via MQTT and edge caching, guaranteeing 100% gate operation uptime during central server network disruptions.',
+      'Designed an Offline-First IoT edge gateway synchronization mechanism via MQTT and edge caching, supporting local gate operation during central server network disruptions.',
       'Implemented distributed locking via Redis and row-level database transactions (SELECT FOR UPDATE) to prevent double-spending and inventory overselling during flash sales.',
       'Built public-facing OpenAPI/REST integration endpoints for major OTA channels (Klook, Traveloka...) and developed operational portals using React, TypeScript, and Ant Design.',
     ],
@@ -532,7 +473,7 @@ export const PROJECTS: Project[] = [
       'Built and maintained website and front-end modules using Vanilla JavaScript, jQuery, and Bootstrap.',
       'Integrated front-end with back-end systems developed on Drupal (PHP) and later migrated functionalities to Moodle (PHP) to support LMS transition.',
       'Contributed to UI/UX implementation for UK Open University homepage and internal learning tools, ensuring intuitive navigation.',
-      'Ensured Accessibility (A11y) compliance meeting international WCAG standards for inclusive education.',
+      'Implemented accessibility improvements informed by WCAG guidance for inclusive education.',
     ],
     technologies: ['Vanilla JavaScript', 'jQuery', 'Bootstrap', 'Drupal (PHP)', 'Moodle (PHP)', 'WCAG A11y'],
   },

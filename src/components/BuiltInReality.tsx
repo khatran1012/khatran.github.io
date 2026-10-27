@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ExternalLink,
@@ -10,7 +10,26 @@ import {
 import { PROJECTS, Project } from '../data/cvData';
 
 export const BuiltInReality: React.FC = () => {
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(() => {
+    const projectId = new URLSearchParams(window.location.search).get('case');
+    return PROJECTS.find((project) => project.featured && project.id === projectId) || null;
+  });
+
+  const caseStudyRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (selectedProject) url.searchParams.set('case', selectedProject.id);
+    else url.searchParams.delete('case');
+    window.history.replaceState(window.history.state, '', url);
+    if (!selectedProject || !caseStudyRef.current) return;
+    const previousOverflow = document.body.style.overflow;
+    caseStudyRef.current.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedProject]);
 
   // Exhibition narrative data matching Kha Tran's exact projects
   const EXHIBITION_STORIES: Record<
@@ -29,11 +48,11 @@ export const BuiltInReality: React.FC = () => {
       architecture:
         'Hybrid Golang microservices (Gin, SQLC, PostgreSQL) combined with an autonomous on-premise Linux Edge Gateway. MQTT broker manages bidirectional telemetry. Redis distributed mutexes and PostgreSQL row-level locks (SELECT FOR UPDATE) serialize validations.',
       ownership:
-        'Architected and implemented high-throughput backend services in Golang, engineered the offline-first edge caching and synchronization daemon, and authored public-facing OpenAPI integration endpoints for OTA partners (Klook, Traveloka).',
+        'My implementation scope: Golang backend services, edge caching and synchronization, and OTA-facing API endpoints. The architecture above describes the wider platform; delivery also involved frontend, infrastructure, and product teammates.',
       tradeoffs:
-        'Chose local HMAC-signed ticket verification on the edge gateway with Write-Ahead-Log (WAL) replay over blocking cloud verification. Prioritized 100% physical passage continuity over strict immediate cloud consensus.',
+        'Chose local HMAC-signed ticket verification on the edge gateway with Write-Ahead-Log (WAL) replay over blocking cloud verification. Designed for local admission during WAN loss, accepting delayed reconciliation. Independent offline gateways require ticket partitioning or coordination to prevent duplicate admission.',
       results:
-        'Achieved 100% turnstile physical hardware uptime during WAN disruptions, <15ms gate response times, and zero instances of ticket double-spending.',
+        'Implemented offline validation and deferred synchronization. Production uptime, gate latency, and cross-gateway duplicate rates are not benchmarked in this portfolio.',
     },
     'marina-bay-sands': {
       problem:
@@ -41,23 +60,23 @@ export const BuiltInReality: React.FC = () => {
       architecture:
         'Next.js SSR/SSG coupled with React Native Web Progressive Web App (PWA) architecture. Redux centralized state store with deterministic optimistic cart updates and secure multi-currency payment gateway integrations.',
       ownership:
-        'Developed end-to-end e-commerce purchasing flows, optimized technical SEO to achieve sub-second LCP scores, and integrated localized payment gateways.',
+        'Developed end-to-end e-commerce purchasing flows, worked on rendering performance and technical SEO, and integrated localized payment gateways.',
       tradeoffs:
         'Maintained hybrid SSR/SSG rendering rather than full client-side SPA to guarantee SEO crawlability across global search engines while maintaining rich dynamic cart reactivity.',
       results:
-        'Sub-second first paint times, seamless cross-platform desktop and mobile app experience, and resilient transaction conversion.',
+        'Delivered purchasing interfaces across desktop and mobile. No public LCP or conversion benchmark is included here.',
     },
     'techcombank-portal': {
       problem:
-        'Serving millions of banking customers across Vietnam requires absolute accessibility (WCAG 2.1 AA), zero layout shifts, and a unified enterprise CMS system enabling non-technical content authors to deploy dynamic banking products rapidly.',
+        'Serving millions of banking customers across Vietnam requires accessible interactions, stable layouts, and a unified enterprise CMS system enabling non-technical content authors to deploy dynamic banking products rapidly.',
       architecture:
         'Adobe Experience Manager (AEM) modular architecture. Custom component framework using Vanilla JavaScript to bypass heavy client-side runtime overhead.',
       ownership:
-        'Customized and maintained modular AEM components, established strict WCAG AA accessibility compliance, and managed enterprise digital financial asset pipelines.',
+        'Customized and maintained modular AEM components, improved accessibility against WCAG guidance, and managed enterprise digital financial asset pipelines.',
       tradeoffs:
         'Deliberately avoided heavy client-side frameworks in favor of ultra-lean Vanilla JavaScript modules within AEM to guarantee maximum cross-device compatibility for elderly and low-spec banking users.',
       results:
-        'Flawless WCAG AA compliance, zero layout shifts, and dramatic reduction in page publishing turnaround time for corporate banking campaigns.',
+        'Delivered reusable banking content components and accessibility improvements. Formal WCAG certification and publishing-time measurements are not provided here.',
     },
     'nashtech-virtual-vietnam': {
       problem:
@@ -65,11 +84,11 @@ export const BuiltInReality: React.FC = () => {
       architecture:
         'Browser-based Three.js WebGL canvas combined with React and Tailwind CSS. Procedural 3D camera transitions and compressed GLTF texture streaming.',
       ownership:
-        'Developed the 3D/360° interactive spatial environment using Three.js, optimized GPU draw calls for 60fps mobile execution, and integrated seamless audio-visual cues.',
+        'Developed the 3D/360° interactive spatial environment using Three.js, optimized GPU draw calls for mobile execution, and integrated seamless audio-visual cues.',
       tradeoffs:
-        'Employed low-poly geometric assets with baked ambient occlusion maps instead of real-time multi-light raymarching to ensure smooth 60fps performance on budget smartphones.',
+        'Employed low-poly geometric assets with baked ambient occlusion maps instead of real-time multi-light raymarching to reduce rendering cost on mobile devices.',
       results:
-        'Featured at major international NashTech showcase events, achieving 60fps interactive 3D rendering directly in standard mobile browsers.',
+        'Delivered a browser-based interactive showcase. Device-specific FPS measurements are not included here.',
     },
   };
 
@@ -88,7 +107,7 @@ export const BuiltInReality: React.FC = () => {
           <p className="chapter-desc">
             A portfolio of systems delivered under real constraints. Each artifact is presented
             with its core architectural problem, ownership boundaries, technical trade-offs, and
-            measurable production outcomes.
+            implementation outcomes. Performance and compliance claims require separate measurement.
           </p>
         </div>
 
@@ -271,7 +290,25 @@ export const BuiltInReality: React.FC = () => {
         {/* Interactive Case Study Modal */}
         <AnimatePresence>
           {selectedProject && (
-            <motion.div
+            <motion.dialog
+              ref={caseStudyRef}
+              aria-labelledby="case-study-title"
+              aria-modal="true"
+              onCancel={() => setSelectedProject(null)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Tab') return;
+                const controls = event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]');
+                const first = controls[0];
+                const last = controls[controls.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                  event.preventDefault();
+                  last?.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                  event.preventDefault();
+                  first?.focus();
+                }
+              }}
+              className="case-study-dialog"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -286,7 +323,9 @@ export const BuiltInReality: React.FC = () => {
                 zIndex: 100,
                 padding: '1.5rem',
               }}
-              onClick={() => setSelectedProject(null)}
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setSelectedProject(null);
+              }}
             >
               <motion.div
                 initial={{ scale: 0.95, y: 20 }}
@@ -309,7 +348,7 @@ export const BuiltInReality: React.FC = () => {
                     <span className="arch-tag patina" style={{ marginBottom: '0.5rem' }}>
                       CASE STUDY // {selectedProject.company?.toUpperCase()}
                     </span>
-                    <h3 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.8rem', color: 'var(--text-ivory)' }}>
+                    <h3 id="case-study-title" style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.8rem', color: 'var(--text-ivory)' }}>
                       {selectedProject.title}
                     </h3>
                   </div>
@@ -369,7 +408,7 @@ export const BuiltInReality: React.FC = () => {
 
                       <div style={{ padding: '1.25rem', background: 'var(--copper-patina-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--copper-patina-border)' }}>
                         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.74rem', color: 'var(--copper-patina)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                          05 // Production Metrics &amp; Impact
+                          05 // Outcomes &amp; Evidence
                         </div>
                         <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-ivory)', lineHeight: 1.6 }}>{s.results}</p>
                       </div>
@@ -401,7 +440,7 @@ export const BuiltInReality: React.FC = () => {
                   Close Case Study
                 </button>
               </motion.div>
-            </motion.div>
+            </motion.dialog>
           )}
         </AnimatePresence>
       </div>

@@ -11,7 +11,7 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('kt-exhibition-theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    return 'dark'; // Industrial Charcoal Dark Mode as requested
+    return 'light';
   });
 
   useEffect(() => {

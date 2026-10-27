@@ -430,3 +430,66 @@ a {
     font-size: 2.2rem;
   }
 }
+
+/* Candidate identity and compact experience evidence. */
+:root { --hero-sculpture-height: 520px; }
+.candidate-identity { margin-bottom: 1.75rem; }
+.candidate-identity p { color: var(--text-ivory); font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1.15; }
+.candidate-identity span { display: block; margin-top: 0.6rem; font-family: var(--font-mono); font-size: 0.8rem; color: var(--copper-patina); text-transform: uppercase; letter-spacing: 0.08em; }
+.career-snapshot { margin-top: 3.5rem; padding-top: 1.5rem; border-top: var(--hairline); }
+.career-label { color: var(--copper-warm-bright); font-family: var(--font-mono); font-size: 0.74rem; }
+.career-label span { display: block; margin-top: 0.4rem; color: var(--text-secondary); font-family: var(--font-body); }
+.career-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+.career-grid article { border-left: 1px solid var(--copper-patina-border); padding-left: 1rem; }
+.career-grid h2 { font-family: var(--font-display); font-size: 1rem; margin: 0.4rem 0; }
+.career-grid p { font-size: 0.8rem; color: var(--text-secondary); }
+.career-grid .career-period { font-family: var(--font-mono); color: var(--copper-patina); font-size: 0.72rem; }
+.career-grid .career-role { font-size: 0.68rem; margin-bottom: 0.5rem; }
+.section { scroll-margin-top: var(--nav-height); }
+:focus-visible { outline: 2px solid var(--copper-patina); outline-offset: 4px; }
+nav a[aria-current='location'] { color: var(--copper-patina) !important; box-shadow: inset 0 -2px var(--copper-patina); }
+.case-study-dialog { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; color: var(--text-ivory); }
+.case-study-dialog::backdrop { background: rgba(5, 7, 9, 0.88); }
+.sim-container { background: var(--bg-surface); }
+.sim-header { flex-wrap: wrap; gap: 0.5rem; }
+.simulation-modes { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.simulation-modes button { cursor: pointer; min-height: 44px; }
+.simulation-delays { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+.simulation-delays label { font-size: 0.7rem; color: var(--text-secondary); }
+.simulation-delays input { display: block; width: 100%; min-height: 44px; margin-top: 0.4rem; padding: 0.5rem; color: var(--text-ivory); background: var(--bg-canvas); border: 1px solid var(--border-arch); border-radius: var(--radius-xs); }
+.simulation-note { color: var(--text-secondary); font-size: 0.76rem; margin-bottom: 1.25rem; line-height: 1.6; }
+button:disabled { opacity: 0.55; cursor: wait; }
+.container, .container > *, .arch-slab, .sim-container { min-width: 0; }
+.arch-tag { max-width: 100%; overflow-wrap: anywhere; }
+@media (max-width: 768px) {
+  :root { --hero-sculpture-height: 300px; }
+  .case-study-dialog { padding: 0.75rem !important; }
+  .case-study-dialog > .arch-slab { padding: 1.25rem !important; max-height: 92dvh !important; }
+  .sim-body { padding: 1rem; }
+  .sim-body > div > div { flex-wrap: wrap; gap: 0.75rem; }
+  .slab-callout { display: none !important; }
+}
+
+@media (max-width: 380px) {
+  header > .container > div { gap: 0.5rem !important; }
+  header a[aria-label] { gap: 0.4rem !important; }
+  header a[aria-label] > div:last-child > div:last-child { font-size: 0.58rem !important; }
+}
+
+@media (max-width: 480px) {
+  .nav-resume { width: 38px; height: 38px; padding: 0 !important; }
+  .nav-resume span { display: none; }
+}
+footer .container > div > div { min-width: 0; max-width: 100%; }
+footer a { max-width: 100%; }
+footer a span { min-width: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 480px) {
+  .anatomy-status > span { display: none; }
+}
+
+.club-crest-viewer { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.club-crest-viewer canvas { cursor: grab; touch-action: pan-y; }
+.club-crest-viewer canvas:active { cursor: grabbing; }
+.club-crest-caption { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; color: var(--text-ivory); font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.12em; pointer-events: none; }
+.club-crest-caption span { display: block; margin-top: 0.4rem; color: var(--text-secondary); font-size: 0.68rem; letter-spacing: 0.02em; }

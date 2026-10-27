@@ -34,8 +34,8 @@ export const WhatsNext: React.FC = () => {
           </h2>
           <p className="chapter-desc">
             The next era of software belongs to systems that operate deterministically:
-            local-first synchronization, high-throughput microsecond services, and resilient
-            interfaces that never break under network volatility.
+            local-first synchronization, efficient services, and interfaces that handle
+            network interruptions gracefully.
           </p>
         </div>
 
@@ -43,7 +43,7 @@ export const WhatsNext: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
             gap: '1.25rem',
             marginBottom: '3rem',
           }}
@@ -53,11 +53,11 @@ export const WhatsNext: React.FC = () => {
               VECTOR 01 // LOCAL-FIRST &amp; CRDTs
             </div>
             <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-ivory)', marginBottom: '0.4rem' }}>
-              Zero-Latency Offline Computing
+              Resilient Offline Computing
             </div>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-              Pushing edge database intelligence directly into client environments, guaranteeing
-              sub-millisecond state updates that reconcile conflict-free upon network restore.
+              Exploring local data storage and conflict resolution so interfaces can remain useful
+              during network loss and reconcile changes after reconnection.
             </p>
           </div>
 

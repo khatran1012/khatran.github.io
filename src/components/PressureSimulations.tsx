@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Zap,
   Play,
@@ -11,55 +11,83 @@ import { SIMULATION_SPECS } from '../data/cvData';
 export const PressureSimulations: React.FC = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
 
-  // --- SIMULATION 1 STATE (Race Condition) ---
-  const [sim1Mode, setSim1Mode] = useState<'naive' | 'shielded'>('shielded');
-  const [sim1Running, setSim1Running] = useState(false);
-  const [sim1Display, setSim1Display] = useState<string>('Idle (No query fired)');
-  const [sim1Log, setSim1Log] = useState<string[]>([]);
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const controllers = useRef<AbortController[]>([]);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      timers.current.forEach(clearTimeout);
+      controllers.current.forEach((controller) => controller.abort());
+    };
+  }, []);
+  const schedule = (callback: () => void, delay: number) => {
+    const timer = setTimeout(() => {
+      timers.current.delete(timer);
+      callback();
+    }, delay);
+    timers.current.add(timer);
+  };
 
-  const runSim1 = () => {
+  const [sim1Mode, setSim1Mode] = useState<'naive' | 'abort' | 'request-id'>('abort');
+  const [sim1Running, setSim1Running] = useState(false);
+  const [sim1Display, setSim1Display] = useState('Idle (No query fired)');
+  const [sim1Log, setSim1Log] = useState<string[]>([]);
+  const [firstDelay, setFirstDelay] = useState(750);
+  const [secondDelay, setSecondDelay] = useState(250);
+
+  const runSim1 = async () => {
     if (sim1Running) return;
     setSim1Running(true);
-    setSim1Log([`[0ms] User rapidly types: "Rea" -> fires Request #1`]);
+    setSim1Log([]);
     setSim1Display('Loading results for "Rea"...');
-
-    setTimeout(() => {
-      setSim1Log((prev) => [...prev, `[100ms] User types: "React" -> fires Request #2`]);
-      if (sim1Mode === 'shielded') {
-        setSim1Log((prev) => [
-          ...prev,
-          `[105ms] SHIELD ACTIVE: controller.abort() called for Request #1`,
-        ]);
+    const started = performance.now();
+    const log = (message: string) => {
+      if (mounted.current) setSim1Log((prev) => [...prev, `[${Math.round(performance.now() - started)}ms] ${message}`]);
+    };
+    let latestRequestId = 0;
+    const first = new AbortController();
+    const second = new AbortController();
+    controllers.current = [first, second];
+    const request = async (query: string, delay: number, controller: AbortController) => {
+      const id = ++latestRequestId;
+      log(`Request #${id} fired for "${query}" (${delay}ms mock latency)`);
+      try {
+        const result = await new Promise<string>((resolve, reject) => {
+          const abort = () => {
+            clearTimeout(timer);
+            reject(new DOMException('Request cancelled', 'AbortError'));
+          };
+          const timer = setTimeout(() => {
+            controller.signal.removeEventListener('abort', abort);
+            resolve(`Results for "${query}"`);
+          }, delay);
+          controller.signal.addEventListener('abort', abort, { once: true });
+        });
+        if (!mounted.current) return;
+        if (sim1Mode === 'request-id' && id !== latestRequestId) {
+          log(`Request #${id} completed; ignored because a newer request exists.`);
+          return;
+        }
+        const stale = id !== latestRequestId;
+        setSim1Display(result + (stale ? ' — [BUG: STALE OVERWRITE!]' : ''));
+        log(`Request #${id} completed; state updated.${stale ? ' ALERT: stale response.' : ''}`);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          log(`Request #${id} cancelled by AbortController.`);
+        } else {
+          log(`Request #${id} failed: ${String(error)}`);
+        }
       }
+    };
+    const pendingFirst = request('Rea', firstDelay, first);
+    schedule(async () => {
+      if (sim1Mode === 'abort') first.abort();
+      const pendingSecond = request('React', secondDelay, second);
+      await Promise.all([pendingFirst, pendingSecond]);
+      if (mounted.current) setSim1Running(false);
     }, 100);
-
-    // Request 2 completes at 350ms (100ms delay + 250ms fetch)
-    setTimeout(() => {
-      setSim1Log((prev) => [
-        ...prev,
-        `[350ms] Request #2 ("React") completes! (Payload: 1,420 items)`,
-      ]);
-      setSim1Display('Results for "React" (1,420 items)');
-    }, 350);
-
-    // Request 1 completes at 750ms
-    setTimeout(() => {
-      if (sim1Mode === 'naive') {
-        setSim1Log((prev) => [
-          ...prev,
-          `[750ms] Request #1 ("Rea") completes late! Naive handler overwrites state!`,
-          `[ALERT] UI is now showing STALE data for "Rea" despite user searching "React"!`,
-        ]);
-        setSim1Display('Results for "Rea" (84 items) — [BUG: STALE OVERWRITE!]');
-      } else {
-        setSim1Log((prev) => [
-          ...prev,
-          `[750ms] Request #1 payload arrived, but dropped: requestId mismatch & socket aborted.`,
-          `[VERIFIED] UI preserved current "React" results safely. Zero race condition.`,
-        ]);
-      }
-      setSim1Running(false);
-    }, 800);
   };
 
   // --- SIMULATION 2 STATE (Distributed Lock) ---
@@ -76,7 +104,7 @@ export const PressureSimulations: React.FC = () => {
     setGateBStatus('scanning');
     setSim2ResultSummary('Simulating concurrent barcode scan at Gate 01 and Gate 02 (Δt = 4ms)...');
 
-    setTimeout(() => {
+    schedule(() => {
       if (sim2Mode === 'naive') {
         // Both pass (Critical bug!)
         setGateAStatus('passed');
@@ -89,7 +117,7 @@ export const PressureSimulations: React.FC = () => {
         setGateAStatus('passed');
         setGateBStatus('rejected');
         setSim2ResultSummary(
-          'PROTECTION SUCCESS: Gate 01 acquired Redis mutex (Key: lock:ticket:TK-8891) and SQL row lock. Gate 02 rejected with ALREADY_CONSUMED.'
+          'CONCEPTUAL RESULT: Gate 01 consumes the ticket under a row lock; Gate 02 is rejected. This scripted browser demo does not connect to Redis or PostgreSQL.'
         );
       }
       setSim2Running(false);
@@ -108,17 +136,17 @@ export const PressureSimulations: React.FC = () => {
 
     if (!sim3Connected) {
       // Offline mode
-      setSim3GateState('offline_open');
       setSim3WalQueue((prev) => [
-        `WAL #0${nextScan}: Ticket TK-${9000 + nextScan} (Signed HMAC valid) - Offline Approved`,
+        `WAL #0${nextScan}: Ticket TK-${9000 + nextScan} (Assumed valid) - Offline Approved`,
         ...prev,
       ]);
+      setSim3GateState('offline_open');
     } else {
       // Online mode
       setSim3GateState('open');
     }
 
-    setTimeout(() => setSim3GateState('idle'), 400);
+    schedule(() => setSim3GateState('idle'), 400);
   };
 
   return (
@@ -136,7 +164,7 @@ export const PressureSimulations: React.FC = () => {
           <p className="chapter-desc">
             Seniority is not demonstrated by listing library names—it is revealed in how you reason
             about concurrency, race conditions, edge failures, and physical world constraints.
-            Interact with live simulations replicating production scenarios.
+            Run real asynchronous mock requests, then explore conceptual lock and offline scenarios. These browser demos do not connect to production services or physical hardware.
           </p>
         </div>
 
@@ -202,7 +230,7 @@ export const PressureSimulations: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
             gap: '2rem',
             alignItems: 'start',
           }}
@@ -219,46 +247,28 @@ export const PressureSimulations: React.FC = () => {
               </span>
             </div>
 
-            <div className="sim-body">
+            <div className="sim-body" aria-live="polite">
+              {activeTab > 0 && <p className="simulation-note">Conceptual browser demo: scripted events and in-memory state. No Redis, PostgreSQL, durable WAL, HMAC verification, or hardware is running here.</p>}
               {/* --- WORKBENCH 1: RACE CONDITION SIMULATOR --- */}
               {activeTab === 0 && (
                 <div>
-                  {/* Mode Selector */}
-                  <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <button
-                      onClick={() => setSim1Mode('naive')}
-                      style={{
-                        flex: 1,
-                        padding: '0.65rem',
-                        borderRadius: 'var(--radius-xs)',
-                        border: `1px solid ${sim1Mode === 'naive' ? 'rgba(239, 68, 68, 0.5)' : 'var(--border-arch)'}`,
-                        background: sim1Mode === 'naive' ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
-                        color: sim1Mode === 'naive' ? '#f87171' : 'var(--text-secondary)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      [1] Naive Async (Vulnerable)
-                    </button>
-                    <button
-                      onClick={() => setSim1Mode('shielded')}
-                      style={{
-                        flex: 1,
-                        padding: '0.65rem',
-                        borderRadius: 'var(--radius-xs)',
-                        border: `1px solid ${sim1Mode === 'shielded' ? 'var(--copper-patina-border)' : 'var(--border-arch)'}`,
-                        background: sim1Mode === 'shielded' ? 'var(--copper-patina-subtle)' : 'transparent',
-                        color: sim1Mode === 'shielded' ? 'var(--copper-patina)' : 'var(--text-secondary)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      [2] AbortController Shield (Robust)
-                    </button>
+                  <div className="simulation-modes" role="group" aria-label="Request strategy">
+                    {(['naive', 'abort', 'request-id'] as const).map((mode) => (
+                      <button key={mode} onClick={() => setSim1Mode(mode)} disabled={sim1Running}
+                        aria-pressed={sim1Mode === mode} className={`arch-tag ${sim1Mode === mode ? 'patina' : ''}`}>
+                        {{ naive: 'Naive', abort: 'AbortController', 'request-id': 'Request ID' }[mode]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="simulation-delays">
+                    <label>Request #1 latency (ms)
+                      <input type="number" min="0" max="5000" step="50" value={firstDelay} disabled={sim1Running}
+                        onChange={(event) => setFirstDelay(Math.max(0, Math.min(5000, Number(event.target.value))))} />
+                    </label>
+                    <label>Request #2 latency (ms)
+                      <input type="number" min="0" max="5000" step="50" value={secondDelay} disabled={sim1Running}
+                        onChange={(event) => setSecondDelay(Math.max(0, Math.min(5000, Number(event.target.value))))} />
+                    </label>
                   </div>
 
                   {/* Trigger Action */}
@@ -329,6 +339,7 @@ export const PressureSimulations: React.FC = () => {
                 <div>
                   <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
                     <button
+                      disabled={sim2Running}
                       onClick={() => setSim2Mode('naive')}
                       style={{
                         flex: 1,
@@ -346,6 +357,7 @@ export const PressureSimulations: React.FC = () => {
                       Naive Read-Then-Update
                     </button>
                     <button
+                      disabled={sim2Running}
                       onClick={() => setSim2Mode('locked')}
                       style={{
                         flex: 1,
@@ -441,12 +453,15 @@ export const PressureSimulations: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                       {sim3Connected ? <Wifi size={18} color="var(--copper-patina)" /> : <WifiOff size={18} color="#f87171" />}
                       <span style={{ fontSize: '0.85rem', fontWeight: 700, color: sim3Connected ? 'var(--copper-patina)' : '#f87171' }}>
-                        WAN CLOUD LINK: {sim3Connected ? 'ONLINE (12ms)' : 'SEVERED / DISCONNECTED'}
+                        WAN CLOUD LINK: {sim3Connected ? 'ONLINE' : 'SEVERED / DISCONNECTED'}
                       </span>
                     </div>
 
                     <button
-                      onClick={() => setSim3Connected(!sim3Connected)}
+                      onClick={() => {
+                        if (!sim3Connected) setSim3WalQueue([]);
+                        setSim3Connected(!sim3Connected);
+                      }}
                       style={{
                         padding: '0.35rem 0.85rem',
                         borderRadius: 'var(--radius-xs)',
@@ -491,18 +506,18 @@ export const PressureSimulations: React.FC = () => {
                     <div>
                       <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>TURNSTILE RELAY STATUS</div>
                       <div style={{ fontSize: '1.1rem', fontWeight: 700, color: sim3GateState !== 'idle' ? 'var(--copper-patina)' : 'var(--text-ivory)' }}>
-                        {sim3GateState === 'idle' ? 'IDLE (READY)' : sim3GateState === 'open' ? 'RELAY OPENED (CLOUD CONFIRMED)' : 'RELAY OPENED (LOCAL HMAC VALIDATED)'}
+                        {sim3GateState === 'idle' ? 'IDLE (READY)' : sim3GateState === 'open' ? 'RELAY OPENED (CLOUD CONFIRMED)' : 'RELAY OPENED (LOCAL VALIDATION ASSUMED)'}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>HARDWARE DOWNTIME</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--copper-patina)' }}>0 ms (100% Uptime)</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>DEMO EXECUTION</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--copper-patina)' }}>In-memory model</div>
                     </div>
                   </div>
 
                   {/* Local WAL Queue */}
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', marginBottom: '0.4rem' }}>
-                    LOCAL EDGE WRITE-AHEAD-LOG (WAL) BUFFER ({sim3WalQueue.length} entries pending sync):
+                    SIMULATED OUTBOX ({sim3WalQueue.length} entries pending sync):
                   </div>
                   <div
                     style={{
@@ -516,7 +531,7 @@ export const PressureSimulations: React.FC = () => {
                     }}
                   >
                     {sim3WalQueue.length === 0 ? (
-                      <span style={{ color: 'var(--text-tertiary)' }}>WAL queue empty. Turnstile running online sync.</span>
+                      <span style={{ color: 'var(--text-tertiary)' }}>No pending entries. Reconnection simulates acknowledgement and clears this in-memory queue.</span>
                     ) : (
                       sim3WalQueue.map((wal, idx) => <div key={idx}>{wal}</div>)
                     )}
@@ -526,7 +541,7 @@ export const PressureSimulations: React.FC = () => {
             </div>
           </div>
 
-          {/* Right: Technical Explanation & Verbatim Production Implementation */}
+          {/* Right: Technical Explanation */}
           <div className="arch-slab" style={{ padding: '2rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
               <Code2 size={16} color="var(--copper-patina)" />
@@ -550,33 +565,13 @@ export const PressureSimulations: React.FC = () => {
               </p>
             </div>
 
-            <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--copper-patina-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--copper-patina-border)' }}>
+            <div style={{ padding: '1rem', background: 'var(--copper-patina-subtle)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--copper-patina-border)' }}>
               <div style={{ fontSize: '0.74rem', fontFamily: 'var(--font-mono)', color: 'var(--copper-patina)', marginBottom: '0.25rem' }}>
                 THE ROBUST ARCHITECTURE:
               </div>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-ivory)', lineHeight: 1.5 }}>
                 {SIMULATION_SPECS[activeTab].solutionExplanation}
               </p>
-            </div>
-
-            {/* Verbatim Code Solution */}
-            <div style={{ borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '1px solid var(--border-arch)' }}>
-              <div style={{ padding: '0.5rem 1rem', background: 'var(--bg-surface-elevated)', borderBottom: '1px solid var(--border-arch)', fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--text-tertiary)' }}>
-                PRODUCTION IMPLEMENTATION BLUEPRINT
-              </div>
-              <pre
-                style={{
-                  padding: '1rem',
-                  background: 'var(--bg-terminal)',
-                  fontSize: '0.76rem',
-                  lineHeight: 1.5,
-                  overflowX: 'auto',
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--text-terminal)',
-                }}
-              >
-                <code>{SIMULATION_SPECS[activeTab].codeSnippet}</code>
-              </pre>
             </div>
           </div>
         </div>
