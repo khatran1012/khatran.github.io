@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Download, Menu, X, FileText } from 'lucide-react';
+import { Sun, Moon, Download, Menu, X } from 'lucide-react';
 import { PERSONAL_INFO } from '../data/cvData';
 
 interface NavbarProps {
@@ -19,106 +19,224 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navItems = [
-    { label: 'About', href: '#about' },
-    { label: 'Skills', href: '#skills' },
-    { label: 'Experience', href: '#experience' },
-    { label: 'Projects', href: '#projects' },
-    { label: 'Education', href: '#education' },
-    { label: 'Contact', href: '#contact' },
+  const chapters = [
+    { num: '01', label: 'Origin', href: '#origin' },
+    { num: '02', label: 'The System', href: '#system' },
+    { num: '03', label: 'Under Pressure', href: '#pressure' },
+    { num: '04', label: 'Reality', href: '#reality' },
+    { num: '05', label: "What's Next", href: '#next' },
   ];
 
   return (
-    <header className={`navbar-wrapper ${scrolled ? 'scrolled' : ''}`}>
+    <header
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 90,
+        backgroundColor: scrolled ? 'var(--bg-glass)' : 'rgba(11, 13, 15, 0.4)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: `1px solid ${scrolled ? 'var(--border-arch)' : 'transparent'}`,
+        transition: 'all var(--trans-fast)',
+      }}
+    >
       <div className="container">
-        <div className="navbar-inner">
-          {/* Brand */}
-          <a href="#hero" className="brand" aria-label="Kha Tran Portfolio Home">
-            <div className="brand-badge">KT</div>
-            <div className="brand-text">
-              <span className="brand-name">{PERSONAL_INFO.name}</span>
-              <span className="brand-role">Software Engineer</span>
+        <div
+          style={{
+            height: 'var(--nav-height)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1.5rem',
+          }}
+        >
+          {/* Exhibition Monogram & Identity */}
+          <a
+            href="#origin"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              textDecoration: 'none',
+            }}
+            aria-label="The Anatomy of Building Exhibition Home"
+          >
+            <div
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-xs)',
+                backgroundColor: 'var(--copper-patina-subtle)',
+                border: '1px solid var(--copper-patina-border)',
+                color: 'var(--copper-patina)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+              }}
+            >
+              KT
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-editorial)',
+                  fontWeight: 700,
+                  fontSize: '1.05rem',
+                  color: 'var(--text-ivory)',
+                  lineHeight: 1.1,
+                }}
+              >
+                {PERSONAL_INFO.name}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.68rem',
+                  color: 'var(--copper-patina)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                SOFTWARE ENGINEER
+              </div>
             </div>
           </a>
 
-          {/* Desktop Nav Links */}
-          <nav aria-label="Main Navigation">
-            <ul className="nav-links">
-              {navItems.map((item) => (
-                <li key={item.label}>
-                  <a href={item.href} className="nav-link">
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
+          {/* Desktop Chapter Navigation */}
+          <nav
+            aria-label="Exhibition Chapters"
+            style={{
+              display: 'none',
+              alignItems: 'center',
+              gap: '1.5rem',
+            }}
+            className="desktop-chapters"
+          >
+            {chapters.map((ch) => (
+              <a
+                key={ch.num}
+                href={ch.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.78rem',
+                  color: 'var(--text-secondary)',
+                  transition: 'color var(--trans-fast)',
+                  padding: '0.35rem 0.5rem',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--copper-patina)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              >
+                <span style={{ color: 'var(--copper-warm-bright)', fontSize: '0.68rem' }}>{ch.num}</span>
+                <span>{ch.label}</span>
+              </a>
+            ))}
           </nav>
 
-          {/* Actions */}
-          <div className="nav-actions">
+          {/* Right Header Actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <button
               onClick={toggleTheme}
-              className="btn-icon"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-xs)',
+                background: 'transparent',
+                border: '1px solid var(--border-arch)',
+                color: 'var(--text-secondary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
               title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
               aria-label="Toggle Theme"
             >
-              {theme === 'light' ? <Moon size={19} /> : <Sun size={19} />}
+              {theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}
             </button>
 
             <a
               href={PERSONAL_INFO.cvPdfUrl}
               download="Kha_Tran_Software_Engineer_CV.pdf"
-              className="btn btn-primary"
-              style={{ padding: '0.55rem 1.15rem', fontSize: '0.88rem' }}
+              className="btn-arch btn-arch-patina"
+              style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}
             >
-              <Download size={16} />
-              <span>CV PDF</span>
+              <Download size={15} />
+              <span>Resume PDF</span>
             </a>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="btn-icon mobile-toggle"
-              aria-label="Toggle Mobile Menu"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: 'var(--radius-xs)',
+                background: 'transparent',
+                border: '1px solid var(--border-arch)',
+                color: 'var(--text-ivory)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+              className="mobile-chapters-toggle"
+              aria-label="Toggle Exhibition Chapters"
             >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Dropdown Menu */}
+        {/* Mobile Chapters Dropdown */}
         {mobileMenuOpen && (
           <div
             style={{
               padding: '1.25rem 0',
-              borderTop: '1px solid var(--border-color)',
+              borderTop: '1px solid var(--border-arch)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.85rem',
+              gap: '0.75rem',
             }}
           >
-            {navItems.map((item) => (
+            {chapters.map((ch) => (
               <a
-                key={item.label}
-                href={item.href}
-                className="nav-link"
-                style={{ fontSize: '1rem', padding: '0.4rem 0' }}
+                key={ch.num}
+                href={ch.href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.6rem',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.9rem',
+                  color: 'var(--text-ivory)',
+                  padding: '0.5rem 0',
+                }}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {item.label}
+                <span style={{ color: 'var(--copper-patina)' }}>{ch.num} //</span>
+                <span>{ch.label}</span>
               </a>
             ))}
-            <a
-              href={PERSONAL_INFO.cvPdfUrl}
-              download="Kha_Tran_Software_Engineer_CV.pdf"
-              className="btn btn-secondary"
-              style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
-            >
-              <FileText size={16} />
-              <span>Download CV (PDF)</span>
-            </a>
           </div>
         )}
       </div>
+
+      <style>{`
+        @media (min-width: 900px) {
+          .desktop-chapters {
+            display: flex !important;
+          }
+          .mobile-chapters-toggle {
+            display: none !important;
+          }
+        }
+      `}</style>
     </header>
   );
 };

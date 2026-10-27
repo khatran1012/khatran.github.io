@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
-import { Hero } from './components/Hero';
-import { About } from './components/About';
-import { Skills } from './components/Skills';
-import { Experience } from './components/Experience';
-import { Projects } from './components/Projects';
-import { Education } from './components/Education';
-import { Contact } from './components/Contact';
-import { Footer } from './components/Footer';
+import { OriginHero } from './components/OriginHero';
+import { SystemAnatomy } from './components/SystemAnatomy';
+import { PressureSimulations } from './components/PressureSimulations';
+import { BuiltInReality } from './components/BuiltInReality';
+import { WhatsNext } from './components/WhatsNext';
+import { ExhibitionFooter } from './components/ExhibitionFooter';
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('kt-portfolio-theme');
+    const saved = localStorage.getItem('kt-exhibition-theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    return 'light'; // Default to light mode matching CV aesthetic
+    return 'dark'; // Industrial Charcoal Dark Mode as requested
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('kt-portfolio-theme', theme);
+    localStorage.setItem('kt-exhibition-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -26,18 +24,25 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="portfolio-app">
+    <div className="portfolio-app" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar theme={theme} toggleTheme={toggleTheme} />
-      <main id="main-content">
-        <Hero />
-        <About />
-        <Skills />
-        <Experience />
-        <Projects />
-        <Education />
-        <Contact />
+      <main id="main-content" style={{ flex: 1 }}>
+        {/* Chapter 01 — The Origin */}
+        <OriginHero />
+
+        {/* Chapter 02 — Inside the System */}
+        <SystemAnatomy />
+
+        {/* Chapter 03 — Decisions Under Pressure */}
+        <PressureSimulations />
+
+        {/* Chapter 04 — Built in Reality */}
+        <BuiltInReality />
+
+        {/* Chapter 05 — What's Next? */}
+        <WhatsNext />
       </main>
-      <Footer />
+      <ExhibitionFooter />
     </div>
   );
 };
