@@ -1,44 +1,45 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useLoader } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { Canvas, useLoader, useThree } from '@react-three/fiber';
+import { Environment, Lightformer, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 
-const CREST_URL = './manchester-united.svg';
+const CREST_URL = './manchester-united.svg?finish=metallic';
 
 const ManchesterUnitedCrest: React.FC<{ rotation: [number, number, number] }> = ({ rotation }) => {
   const svg = useLoader(SVGLoader, CREST_URL);
-  // Keep image and vector loader cache keys distinct.
-  const texture = useLoader(THREE.TextureLoader, `${CREST_URL}?texture`);
-  const geometries = useMemo(() => svg.paths
+  const invalidate = useThree((state) => state.invalidate);
+  const parts = useMemo(() => svg.paths
     .filter((path) => (path.userData?.style as { fill?: string } | undefined)?.fill !== 'none')
-    .flatMap((path) => path.toShapes())
-    .map((shape) => {
-      const geometry = new THREE.ExtrudeGeometry(shape, {
-        depth: 9,
-        bevelEnabled: false,
-        curveSegments: 20,
-        steps: 1,
-      });
-      // Project the original crest onto both faces; the rim has its own material.
-      const positions = geometry.getAttribute('position');
-      const uv = geometry.getAttribute('uv');
-      for (let index = 0; index < positions.count; index++) {
-        uv.setXY(index, positions.getX(index) / 296.14334, 1 - positions.getY(index) / 300);
-      }
-      return geometry;
+    .flatMap((path, index) => {
+      const node = path.userData?.node as Element | undefined;
+      const finish = node?.getAttribute('data-metal');
+      const reliefHeight = node?.getAttribute('data-relief') === 'raised' ? 4 : 0;
+      return path.toShapes().map((shape) => ({
+        geometry: new THREE.ExtrudeGeometry(shape, {
+          depth: 32 + index * 0.3 + reliefHeight,
+          bevelEnabled: true,
+          bevelSize: 0.65,
+          bevelThickness: 0.8,
+          bevelSegments: 2,
+          curveSegments: 20,
+          steps: 1,
+        }),
+        color: finish === 'silver' ? '#d6d4c5' : finish === 'rim' ? '#aa7621' : '#c9a348',
+        roughness: finish === 'silver' ? 0.28 : 0.22,
+      }));
     }), [svg]);
 
-  useEffect(() => () => geometries.forEach((geometry) => geometry.dispose()), [geometries]);
-  texture.colorSpace = THREE.SRGBColorSpace;
+  useEffect(() => { invalidate(); }, [invalidate, parts]);
+  useEffect(() => () => parts.forEach(({ geometry }) => geometry.dispose()), [parts]);
 
   return (
     <group rotation={rotation} scale={[0.012, -0.012, 0.012]}>
-      <group position={[-148.07167, -150, -4.5]}>
-        {geometries.map((geometry, index) => (
-          <mesh key={index} geometry={geometry} position={[0, 0, index * 0.005]}>
-            <meshBasicMaterial attach="material-0" map={texture} transparent alphaTest={0.1} toneMapped={false} side={THREE.DoubleSide} />
-            <meshStandardMaterial attach="material-1" color="#a11920" metalness={0.5} roughness={0.35} side={THREE.DoubleSide} />
+      <group position={[-148.07167, -150, -22]}>
+        {parts.map(({ geometry, color, roughness }, index) => (
+          <mesh key={index} geometry={geometry}>
+            <meshPhysicalMaterial attach="material-0" color={color} metalness={0.75} roughness={roughness} clearcoat={0.15} clearcoatRoughness={0.25} envMapIntensity={0.7} side={THREE.DoubleSide} />
+            <meshStandardMaterial attach="material-1" color="#99701d" metalness={0.75} roughness={0.32} side={THREE.DoubleSide} />
           </mesh>
         ))}
       </group>
@@ -49,7 +50,7 @@ const ManchesterUnitedCrest: React.FC<{ rotation: [number, number, number] }> = 
 export const SculptureCanvas: React.FC = () => {
   const [hasWebGL, setHasWebGL] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [rotation, setRotation] = useState<[number, number, number]>([0.06, -0.2, 0]);
+  const [rotation, setRotation] = useState<[number, number, number]>([-0.36, -0.48, -0.08]);
   const drag = useRef<{ pointerId: number; x: number; y: number } | null>(null);
   const rotateWithKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
@@ -88,9 +89,16 @@ export const SculptureCanvas: React.FC = () => {
           tabIndex={0}
           onKeyDown={rotateWithKeyboard}
         >
-          <ambientLight intensity={1.5} />
-          <directionalLight position={[4, 3, 5]} intensity={3} />
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[-3, 5, 6]} intensity={1.8} color="#fff2d0" />
+          <directionalLight position={[4, -1, 3]} intensity={0.8} color="#ffffff" />
           <Suspense fallback={null}>
+            <Environment resolution={128} frames={1}>
+              <color attach="background" args={['#d5c7a4']} />
+              <Lightformer position={[-3, 4, 5]} scale={[5, 3, 1]} intensity={1.3} color="#ffe3a3" />
+              <Lightformer position={[4, 1, 3]} scale={[2, 5, 1]} intensity={1} color="#ffffff" />
+              <Lightformer position={[0, -4, 2]} scale={[4, 1, 1]} intensity={1} color="#cfa955" />
+            </Environment>
             <ManchesterUnitedCrest rotation={rotation} />
           </Suspense>
           <OrbitControls makeDefault enablePan={false} enableZoom={false} enableDamping={false} />
@@ -131,9 +139,9 @@ export const SculptureCanvas: React.FC = () => {
           onLostPointerCapture={() => { drag.current = null; }}
         >
           <div className="club-crest-css-model" style={{ transform: `rotateX(${rotation[0]}rad) rotateY(${rotation[1]}rad)` }}>
-            {Array.from({ length: 9 }, (_, index) => (
+            {Array.from({ length: 33 }, (_, index) => (
               <img key={index} src={CREST_URL} alt="" aria-hidden="true" draggable={false}
-                style={{ transform: `translateZ(${index - 4}px)`, filter: index > 0 && index < 8 ? 'brightness(0.35)' : undefined }} />
+                style={{ transform: `translateZ(calc(${index - 16} * var(--crest-layer-step)))`, filter: index > 0 && index < 32 ? 'sepia(0.7) saturate(1.4) brightness(0.72)' : undefined }} />
             ))}
           </div>
         </div>
