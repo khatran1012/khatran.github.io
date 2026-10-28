@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ExternalLink,
   Building2,
@@ -16,6 +16,13 @@ export const BuiltInReality: React.FC = () => {
   });
 
   const caseStudyRef = useRef<HTMLDialogElement>(null);
+  const restorePage = useRef<(() => void) | null>(null);
+  const reducedMotion = useReducedMotion();
+  const finishClose = () => {
+    restorePage.current?.();
+    restorePage.current = null;
+  };
+  useEffect(() => () => { restorePage.current?.(); }, []);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -23,12 +30,19 @@ export const BuiltInReality: React.FC = () => {
     else url.searchParams.delete('case');
     window.history.replaceState(window.history.state, '', url);
     if (!selectedProject || !caseStudyRef.current) return;
+    if (caseStudyRef.current.open) return;
+    const dialog = caseStudyRef.current;
     const previousOverflow = document.body.style.overflow;
-    caseStudyRef.current.showModal();
-    document.body.style.overflow = 'hidden';
-    return () => {
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const scrollPosition = { top: window.scrollY, left: window.scrollX };
+    restorePage.current = () => {
+      dialog.close();
       document.body.style.overflow = previousOverflow;
+      opener?.focus({ preventScroll: true });
+      window.scrollTo({ ...scrollPosition, behavior: 'instant' });
     };
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
   }, [selectedProject]);
 
   // Exhibition narrative data matching Kha Tran's exact projects
@@ -288,13 +302,13 @@ export const BuiltInReality: React.FC = () => {
         </div>
 
         {/* Interactive Case Study Modal */}
-        <AnimatePresence>
+        <AnimatePresence onExitComplete={finishClose}>
           {selectedProject && (
             <motion.dialog
               ref={caseStudyRef}
               aria-labelledby="case-study-title"
               aria-modal="true"
-              onCancel={() => setSelectedProject(null)}
+              onCancel={(event) => { event.preventDefault(); setSelectedProject(null); }}
               onKeyDown={(event) => {
                 if (event.key !== 'Tab') return;
                 const controls = event.currentTarget.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]');
@@ -312,11 +326,11 @@ export const BuiltInReality: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: reducedMotion ? 0 : 0.18, ease: 'easeOut' }}
               style={{
                 position: 'fixed',
                 inset: 0,
                 backgroundColor: 'rgba(5, 7, 9, 0.88)',
-                backdropFilter: 'blur(8px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -328,9 +342,10 @@ export const BuiltInReality: React.FC = () => {
               }}
             >
               <motion.div
-                initial={{ scale: 0.95, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.95, y: 20 }}
+                initial={{ opacity: 0, y: reducedMotion ? 0 : 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reducedMotion ? 0 : 8 }}
+                transition={{ duration: reducedMotion ? 0 : 0.18, ease: 'easeOut' }}
                 onClick={(e) => e.stopPropagation()}
                 className="arch-slab"
                 style={{

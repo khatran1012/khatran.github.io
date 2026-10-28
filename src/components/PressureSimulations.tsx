@@ -5,8 +5,24 @@ import {
   Wifi,
   WifiOff,
   Code2,
+  QrCode,
+  Cpu,
+  Cloud,
+  ArrowRight,
+  CheckCircle2,
+  Search,
+  Monitor,
+  LockKeyhole,
+  Server,
 } from 'lucide-react';
 import { SIMULATION_SPECS } from '../data/cvData';
+
+const TurnstileIcon = () => (
+  <svg className="edge-demo-gate" viewBox="0 0 64 44" width="56" height="38" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+    <path d="M10 40V13a4 4 0 0 1 4-4h7v31M48 40V9h5a4 4 0 0 1 4 4v27" />
+    <path className="edge-demo-arm" d="M21 21h27" /><circle cx="15" cy="15" r="1" />
+  </svg>
+);
 
 export const PressureSimulations: React.FC = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
@@ -34,6 +50,8 @@ export const PressureSimulations: React.FC = () => {
   const [sim1Running, setSim1Running] = useState(false);
   const [sim1Display, setSim1Display] = useState('Idle (No query fired)');
   const [sim1Log, setSim1Log] = useState<string[]>([]);
+  const [sim1Packets, setSim1Packets] = useState(['Ready', 'Ready']);
+  const [sim1Input, setSim1Input] = useState('');
   const [firstDelay, setFirstDelay] = useState(750);
   const [secondDelay, setSecondDelay] = useState(250);
 
@@ -41,6 +59,8 @@ export const PressureSimulations: React.FC = () => {
     if (sim1Running) return;
     setSim1Running(true);
     setSim1Log([]);
+    setSim1Packets(['Waiting', 'Waiting']);
+    setSim1Input('Rea');
     setSim1Display('Loading results for "Rea"...');
     const started = performance.now();
     const log = (message: string) => {
@@ -52,6 +72,7 @@ export const PressureSimulations: React.FC = () => {
     controllers.current = [first, second];
     const request = async (query: string, delay: number, controller: AbortController) => {
       const id = ++latestRequestId;
+      setSim1Packets((packets) => packets.map((status, index) => index === id - 1 ? 'In flight' : status));
       log(`Request #${id} fired for "${query}" (${delay}ms mock latency)`);
       try {
         const result = await new Promise<string>((resolve, reject) => {
@@ -67,14 +88,17 @@ export const PressureSimulations: React.FC = () => {
         });
         if (!mounted.current) return;
         if (sim1Mode === 'request-id' && id !== latestRequestId) {
+          setSim1Packets((packets) => packets.map((status, index) => index === id - 1 ? 'Ignored · older request' : status));
           log(`Request #${id} completed; ignored because a newer request exists.`);
           return;
         }
         const stale = id !== latestRequestId;
+        setSim1Packets((packets) => packets.map((status, index) => index === id - 1 ? (stale ? 'Stale result applied' : 'Result applied') : status === 'Result applied' ? 'Result replaced' : status));
         setSim1Display(result + (stale ? ' — [BUG: STALE OVERWRITE!]' : ''));
         log(`Request #${id} completed; state updated.${stale ? ' ALERT: stale response.' : ''}`);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
+          if (mounted.current) setSim1Packets((packets) => packets.map((status, index) => index === id - 1 ? 'Cancelled' : status));
           log(`Request #${id} cancelled by AbortController.`);
         } else {
           log(`Request #${id} failed: ${String(error)}`);
@@ -84,6 +108,7 @@ export const PressureSimulations: React.FC = () => {
     const pendingFirst = request('Rea', firstDelay, first);
     schedule(async () => {
       if (sim1Mode === 'abort') first.abort();
+      setSim1Input('React');
       const pendingSecond = request('React', secondDelay, second);
       await Promise.all([pendingFirst, pendingSecond]);
       if (mounted.current) setSim1Running(false);
@@ -121,32 +146,55 @@ export const PressureSimulations: React.FC = () => {
         );
       }
       setSim2Running(false);
-    }, 600);
+    }, 1000);
   };
 
   // --- SIMULATION 3 STATE (Offline Edge) ---
   const [sim3Connected, setSim3Connected] = useState<boolean>(true);
   const [sim3ScanCount, setSim3ScanCount] = useState<number>(0);
   const [sim3WalQueue, setSim3WalQueue] = useState<string[]>([]);
-  const [sim3GateState, setSim3GateState] = useState<'idle' | 'open' | 'offline_open'>('idle');
+  const [sim3GateState, setSim3GateState] = useState<'idle' | 'validating' | 'persisting' | 'open' | 'offline_open'>('idle');
+  const [sim3Syncing, setSim3Syncing] = useState(false);
+  const [sim3Synced, setSim3Synced] = useState(0);
+  const [sim3Message, setSim3Message] = useState('Try it: cut the connection, scan a ticket, then reconnect.');
+  const sim3Busy = sim3GateState !== 'idle' || sim3Syncing;
 
   const scanTicketEdge = () => {
+    if (sim3Busy) return;
     const nextScan = sim3ScanCount + 1;
     setSim3ScanCount(nextScan);
+    setSim3GateState('validating');
+    setSim3Message(`TK-${9000 + nextScan}: checking the ${sim3Connected ? 'cloud service' : 'local ticket snapshot'}…`);
+    schedule(() => {
+      setSim3GateState('persisting');
+      setSim3Message(sim3Connected ? 'Recording ticket usage before opening the gate…' : 'Recording local usage + an outbox event before opening the gate…');
+      schedule(() => {
+        if (!sim3Connected) setSim3WalQueue((queue) => [`TK-${9000 + nextScan} · Event ${nextScan} · Awaiting cloud acknowledgement`, ...queue]);
+        setSim3GateState(sim3Connected ? 'open' : 'offline_open');
+        setSim3Message(sim3Connected ? `TK-${9000 + nextScan}: entry approved. Cloud usage recorded.` : `TK-${9000 + nextScan}: entry approved offline. Event queued for replay.`);
+        schedule(() => setSim3GateState('idle'), 1200);
+      }, 500);
+    }, 500);
+  };
 
-    if (!sim3Connected) {
-      // Offline mode
-      setSim3WalQueue((prev) => [
-        `WAL #0${nextScan}: Ticket TK-${9000 + nextScan} (Assumed valid) - Offline Approved`,
-        ...prev,
-      ]);
-      setSim3GateState('offline_open');
+  const toggleEdgeConnection = () => {
+    if (sim3Busy) return;
+    setSim3Connected(!sim3Connected);
+    if (sim3Connected) {
+      setSim3Message('WAN disconnected. The edge gateway can still admit an assumed-valid ticket.');
+    } else if (sim3WalQueue.length) {
+      const pending = sim3WalQueue.length;
+      setSim3Syncing(true);
+      setSim3Message(`Replaying ${pending} queued event(s) to the cloud…`);
+      schedule(() => {
+        setSim3Synced((count) => count + pending);
+        setSim3WalQueue([]);
+        setSim3Syncing(false);
+        setSim3Message(`${pending} event(s) acknowledged. Local outbox cleared.`);
+      }, 900);
     } else {
-      // Online mode
-      setSim3GateState('open');
+      setSim3Message('Connection restored. No queued events to replay.');
     }
-
-    schedule(() => setSim3GateState('idle'), 400);
   };
 
   return (
@@ -254,7 +302,7 @@ export const PressureSimulations: React.FC = () => {
                 <div>
                   <div className="simulation-modes" role="group" aria-label="Request strategy">
                     {(['naive', 'abort', 'request-id'] as const).map((mode) => (
-                      <button key={mode} onClick={() => setSim1Mode(mode)} disabled={sim1Running}
+                      <button key={mode} onClick={() => { setSim1Mode(mode); setSim1Packets(['Ready', 'Ready']); setSim1Input(''); setSim1Display('Idle (No query fired)'); setSim1Log([]); }} disabled={sim1Running}
                         aria-pressed={sim1Mode === mode} className={`arch-tag ${sim1Mode === mode ? 'patina' : ''}`}>
                         {{ naive: 'Naive', abort: 'AbortController', 'request-id': 'Request ID' }[mode]}
                       </button>
@@ -271,271 +319,102 @@ export const PressureSimulations: React.FC = () => {
                     </label>
                   </div>
 
-                  {/* Trigger Action */}
-                  <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <button
-                      onClick={runSim1}
-                      disabled={sim1Running}
-                      className="btn-arch btn-arch-patina"
-                      style={{ padding: '0.6rem 1.4rem' }}
-                    >
-                      <Play size={16} />
-                      <span>{sim1Running ? 'Executing Pipeline...' : 'Fire Rapid Keystrokes ("Rea" -> "React")'}</span>
-                    </button>
+                  <div className="request-demo-search"><Search size={18} /><span>{sim1Input || 'Type to search…'}</span><span>Browser input</span></div>
+                  <div className="request-demo-packets">
+                    {['Rea', 'React'].map((query, index) => (
+                      <div key={query} className={`request-demo-packet ${sim1Packets[index] === 'In flight' ? 'is-active' : ''} ${sim1Packets[index] === 'Stale result applied' ? 'demo-danger' : ''}`}>
+                        <div><Server size={18} /><strong>#{index + 1} “{query}”</strong><span>{index === 0 ? firstDelay : secondDelay} ms</span></div>
+                        <div className="request-demo-track"><span className={sim1Packets[index] === 'In flight' ? 'is-travelling' : ''} /></div>
+                        <span>{sim1Packets[index]}</span>
+                      </div>
+                    ))}
                   </div>
-
-                  {/* Simulated Viewport Output */}
-                  <div
-                    style={{
-                      padding: '1.25rem',
-                      background: 'var(--bg-canvas)',
-                      border: '1px solid var(--border-arch)',
-                      borderRadius: 'var(--radius-sm)',
-                      marginBottom: '1.25rem',
-                    }}
-                  >
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)', display: 'block', marginBottom: '0.4rem' }}>
-                      RENDERED UI STATE (What user sees on screen):
-                    </span>
-                    <div
-                      style={{
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        color: sim1Display.includes('BUG') ? '#f87171' : 'var(--text-ivory)',
-                      }}
-                    >
-                      {sim1Display}
-                    </div>
+                  <button onClick={runSim1} disabled={sim1Running} className="btn-arch btn-arch-patina edge-demo-scan">
+                    <Play size={16} /> {sim1Running ? 'Requests in flight…' : 'Simulate typing “Rea” → “React”'}
+                  </button>
+                  <div className={`request-demo-screen ${sim1Display.includes('BUG') ? 'demo-danger' : ''}`} role="status">
+                    <span><Monitor size={18} /> What the visitor sees</span>
+                    <strong>{sim1Display}</strong>
+                    <p>{sim1Display.includes('BUG') ? 'The older response overwrote the latest search.' : sim1Running ? 'Watch which response is allowed to update the screen.' : sim1Input ? 'Compare another strategy with the same latencies.' : 'Run the demo, then compare Naive, AbortController and Request ID.'}</p>
                   </div>
-
-                  {/* Live Packet Logs */}
-                  <div
-                    style={{
-                      maxHeight: '160px',
-                      overflowY: 'auto',
-                      padding: '0.85rem',
-                      background: 'var(--bg-terminal)',
-                      borderRadius: 'var(--radius-xs)',
-                      fontSize: '0.74rem',
-                      lineHeight: 1.6,
-                      color: 'var(--text-terminal)',
-                    }}
-                  >
-                    {sim1Log.length === 0 ? (
-                      <span style={{ color: 'var(--text-tertiary)' }}>Click button above to trigger asynchronous pipeline execution...</span>
-                    ) : (
-                      sim1Log.map((log, i) => (
-                        <div key={i} style={{ color: log.includes('ALERT') ? '#f87171' : log.includes('VERIFIED') ? 'var(--copper-patina)' : 'inherit' }}>
-                          {log}
-                        </div>
-                      ))
-                    )}
-                  </div>
+                  <details className="demo-event-details"><summary>Request event log · {sim1Log.length} events</summary><div>{sim1Log.length ? sim1Log.map((event, index) => <p key={index}>{event}</p>) : <p>No requests yet.</p>}</div></details>
                 </div>
               )}
 
               {/* --- WORKBENCH 2: CONCURRENCY DISTRIBUTED LOCK --- */}
               {activeTab === 1 && (
-                <div>
-                  <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <button
-                      disabled={sim2Running}
-                      onClick={() => setSim2Mode('naive')}
-                      style={{
-                        flex: 1,
-                        padding: '0.65rem',
-                        borderRadius: 'var(--radius-xs)',
-                        border: `1px solid ${sim2Mode === 'naive' ? 'rgba(239, 68, 68, 0.5)' : 'var(--border-arch)'}`,
-                        background: sim2Mode === 'naive' ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
-                        color: sim2Mode === 'naive' ? '#f87171' : 'var(--text-secondary)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Naive Read-Then-Update
-                    </button>
-                    <button
-                      disabled={sim2Running}
-                      onClick={() => setSim2Mode('locked')}
-                      style={{
-                        flex: 1,
-                        padding: '0.65rem',
-                        borderRadius: 'var(--radius-xs)',
-                        border: `1px solid ${sim2Mode === 'locked' ? 'var(--copper-patina-border)' : 'var(--border-arch)'}`,
-                        background: sim2Mode === 'locked' ? 'var(--copper-patina-subtle)' : 'transparent',
-                        color: sim2Mode === 'locked' ? 'var(--copper-patina)' : 'var(--text-secondary)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Redis Lock + SELECT FOR UPDATE
-                    </button>
+                <div className="edge-demo">
+                  <div className="simulation-modes" role="group" aria-label="Gate concurrency strategy">
+                    {(['naive', 'locked'] as const).map((mode) => (
+                      <button key={mode} disabled={sim2Running} onClick={() => { setSim2Mode(mode); setGateAStatus('idle'); setGateBStatus('idle'); setSim2ResultSummary(null); }} aria-pressed={sim2Mode === mode} className={`arch-tag ${sim2Mode === mode ? 'patina' : ''}`}>
+                        {mode === 'naive' ? 'Without a lock' : 'With a row lock'}
+                      </button>
+                    ))}
                   </div>
-
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <button
-                      onClick={runSim2}
-                      disabled={sim2Running}
-                      className="btn-arch btn-arch-patina"
-                      style={{ padding: '0.6rem 1.4rem' }}
-                    >
-                      <Play size={16} />
-                      <span>{sim2Running ? 'Processing Mutex...' : 'Fire Concurrent Scans (Δt = 4ms)'}</span>
-                    </button>
-                  </div>
-
-                  {/* Dual Gate Physical Visualization */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.25rem' }}>
-                    {/* Gate 1 */}
-                    <div
-                      style={{
-                        padding: '1.25rem',
-                        background: 'var(--bg-canvas)',
-                        borderRadius: 'var(--radius-sm)',
-                        border: `1px solid ${gateAStatus === 'passed' ? 'var(--copper-patina)' : 'var(--border-arch)'}`,
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', marginBottom: '0.3rem' }}>
-                        PHYSICAL TURNSTILE 01
-                      </div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: gateAStatus === 'passed' ? 'var(--copper-patina)' : 'var(--text-ivory)' }}>
-                        {gateAStatus === 'scanning' ? 'VALIDATING...' : gateAStatus === 'passed' ? 'PASS // OPENED' : 'IDLE'}
-                      </div>
+                  <div className="concurrency-demo-ticket"><QrCode size={28} /><div><strong>One ticket · TK-9001</strong><span>Two gates scan the same ticket almost simultaneously.</span></div></div>
+                  <div className="edge-demo-flow concurrency-demo-flow">
+                    <div className={`edge-demo-node ${gateAStatus === 'passed' ? 'is-active gate-open' : gateAStatus === 'scanning' ? 'is-active' : ''}`}>
+                      <TurnstileIcon /><strong>Gate 01</strong><span>{gateAStatus === 'scanning' ? 'Checking ticket…' : gateAStatus === 'passed' ? 'Admitted · 1 visitor' : 'Ready to scan'}</span>
                     </div>
-
-                    {/* Gate 2 */}
-                    <div
-                      style={{
-                        padding: '1.25rem',
-                        background: 'var(--bg-canvas)',
-                        borderRadius: 'var(--radius-sm)',
-                        border: `1px solid ${gateBStatus === 'passed' ? '#f87171' : gateBStatus === 'rejected' ? 'var(--copper-warm)' : 'var(--border-arch)'}`,
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', marginBottom: '0.3rem' }}>
-                        PHYSICAL TURNSTILE 02
-                      </div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: gateBStatus === 'passed' ? '#f87171' : gateBStatus === 'rejected' ? '#f87171' : 'var(--text-ivory)' }}>
-                        {gateBStatus === 'scanning' ? 'VALIDATING...' : gateBStatus === 'passed' ? 'PASS (DUPLICATE!)' : gateBStatus === 'rejected' ? 'REJECTED // LOCKED' : 'IDLE'}
-                      </div>
+                    <ArrowRight className="edge-demo-arrow" size={18} />
+                    <div className={`edge-demo-node ${sim2Running ? 'is-active' : ''}`}>
+                      <LockKeyhole size={32} /><strong>{sim2Mode === 'locked' ? 'Row lock' : 'No lock'}</strong><span>{sim2Running ? sim2Mode === 'locked' ? '01 takes lock · 02 waits' : 'Both read UNUSED' : gateAStatus === 'passed' ? 'Ticket → USED' : 'Ticket → UNUSED'}</span>
+                    </div>
+                    <ArrowRight className="edge-demo-arrow" size={18} />
+                    <div className={`edge-demo-node ${gateBStatus === 'passed' ? 'gate-open demo-danger' : gateBStatus === 'rejected' ? 'demo-blocked' : gateBStatus === 'scanning' ? 'is-active' : ''}`}>
+                      <TurnstileIcon /><strong>Gate 02</strong><span>{gateBStatus === 'scanning' ? 'Checking ticket…' : gateBStatus === 'passed' ? 'Admitted · duplicate!' : gateBStatus === 'rejected' ? 'Blocked · already used' : 'Ready to scan'}</span>
                     </div>
                   </div>
-
-                  {sim2ResultSummary && (
-                    <div
-                      style={{
-                        padding: '0.85rem',
-                        background: sim2ResultSummary.includes('CRITICAL') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(50, 168, 149, 0.1)',
-                        border: `1px solid ${sim2ResultSummary.includes('CRITICAL') ? 'rgba(239, 68, 68, 0.3)' : 'var(--copper-patina-border)'}`,
-                        borderRadius: 'var(--radius-xs)',
-                        fontSize: '0.82rem',
-                        color: sim2ResultSummary.includes('CRITICAL') ? '#fca5a5' : 'var(--copper-patina)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {sim2ResultSummary}
-                    </div>
-                  )}
+                  <button onClick={runSim2} disabled={sim2Running} className="btn-arch btn-arch-patina edge-demo-scan"><Play size={16} />{sim2Running ? 'Both gates are scanning…' : 'Scan the same ticket at both gates'}</button>
+                  <div className={`edge-demo-result ${gateBStatus === 'passed' ? 'demo-danger' : ''}`} role="status">
+                    <strong>{sim2Running ? 'Two scans · one ticket' : gateBStatus === 'passed' ? '2 visitors admitted · duplicate entry' : gateBStatus === 'rejected' ? '1 admitted · 1 blocked · no duplicate' : 'Can one ticket admit two visitors?'}</strong>
+                    <p>{sim2ResultSummary || 'Run without a lock to see the race, then switch to a row lock and replay.'}</p>
+                  </div>
+                  <p className="edge-demo-note">Scripted browser model. The lock and 4 ms arrival gap are conceptual; no database or physical gates are connected.</p>
                 </div>
               )}
 
               {/* --- WORKBENCH 3: OFFLINE EDGE GATEWAY --- */}
               {activeTab === 2 && (
-                <div>
-                  {/* Network Status Toggle */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem', background: 'var(--bg-canvas)', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-arch)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                      {sim3Connected ? <Wifi size={18} color="var(--copper-patina)" /> : <WifiOff size={18} color="#f87171" />}
-                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: sim3Connected ? 'var(--copper-patina)' : '#f87171' }}>
-                        WAN CLOUD LINK: {sim3Connected ? 'ONLINE' : 'SEVERED / DISCONNECTED'}
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        if (!sim3Connected) setSim3WalQueue([]);
-                        setSim3Connected(!sim3Connected);
-                      }}
-                      style={{
-                        padding: '0.35rem 0.85rem',
-                        borderRadius: 'var(--radius-xs)',
-                        border: '1px solid var(--border-arch)',
-                        background: sim3Connected ? 'rgba(239, 68, 68, 0.15)' : 'var(--copper-patina-subtle)',
-                        color: sim3Connected ? '#f87171' : 'var(--copper-patina)',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {sim3Connected ? 'Simulate Fiber Cut' : 'Restore Connection'}
+                <div className="edge-demo">
+                  <div className="edge-demo-network">
+                    <span>{sim3Connected ? <Wifi size={17} /> : <WifiOff size={17} />} {sim3Connected ? 'Cloud connected' : 'WAN offline · Edge still available'}</span>
+                    <button type="button" className="btn-arch btn-arch-outline" disabled={sim3Busy} onClick={toggleEdgeConnection}>
+                      {sim3Syncing ? 'Syncing…' : sim3Connected ? '1. Cut connection' : '3. Reconnect & sync'}
                     </button>
                   </div>
 
-                  {/* Trigger Gate Scan */}
-                  <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.25rem' }}>
-                    <button
-                      onClick={scanTicketEdge}
-                      className="btn-arch btn-arch-patina"
-                      style={{ padding: '0.6rem 1.4rem' }}
-                    >
-                      <Play size={16} />
-                      <span>Scan Visitor Ticket At Gate</span>
-                    </button>
-                  </div>
-
-                  {/* Hardware Status */}
-                  <div
-                    style={{
-                      padding: '1.25rem',
-                      background: 'var(--bg-canvas)',
-                      borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-arch)',
-                      marginBottom: '1rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>TURNSTILE RELAY STATUS</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: sim3GateState !== 'idle' ? 'var(--copper-patina)' : 'var(--text-ivory)' }}>
-                        {sim3GateState === 'idle' ? 'IDLE (READY)' : sim3GateState === 'open' ? 'RELAY OPENED (CLOUD CONFIRMED)' : 'RELAY OPENED (LOCAL VALIDATION ASSUMED)'}
-                      </div>
+                  <div className="edge-demo-flow" aria-label="Ticket validation and gate flow">
+                    <div className={`edge-demo-node ${sim3GateState === 'validating' ? 'is-active' : ''}`}>
+                      <QrCode size={34} aria-hidden="true" />
+                      <strong>Visitor ticket</strong><span>{sim3ScanCount ? `TK-${9000 + sim3ScanCount}` : 'Ready to scan'}</span>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)' }}>DEMO EXECUTION</div>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--copper-patina)' }}>In-memory model</div>
+                    <ArrowRight className="edge-demo-arrow" size={18} aria-hidden="true" />
+                    <div className={`edge-demo-node ${sim3GateState === 'validating' || sim3GateState === 'persisting' ? 'is-active' : ''}`}>
+                      <Cpu size={34} aria-hidden="true" />
+                      <strong>Edge gateway</strong><span>{sim3GateState === 'persisting' ? 'Save usage + event' : sim3Connected ? 'Cloud validation' : 'Local validation*'}</span>
+                    </div>
+                    <ArrowRight className="edge-demo-arrow" size={18} aria-hidden="true" />
+                    <div className={`edge-demo-node ${sim3GateState === 'open' || sim3GateState === 'offline_open' ? 'is-active gate-open' : ''}`}>
+                      <TurnstileIcon />
+                      <strong>{sim3GateState === 'open' || sim3GateState === 'offline_open' ? 'Gate open' : 'Gate closed'}</strong>
+                      <span>{sim3GateState === 'open' || sim3GateState === 'offline_open' ? 'Visitor admitted' : 'Waiting for approval'}</span>
                     </div>
                   </div>
 
-                  {/* Local WAL Queue */}
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', marginBottom: '0.4rem' }}>
-                    SIMULATED OUTBOX ({sim3WalQueue.length} entries pending sync):
+                  <button type="button" onClick={scanTicketEdge} disabled={sim3Busy} className="btn-arch btn-arch-patina edge-demo-scan">
+                    <QrCode size={18} /> {sim3Syncing ? 'Replaying queued events…' : sim3GateState === 'validating' ? 'Validating ticket…' : sim3GateState === 'persisting' ? 'Recording usage…' : sim3GateState !== 'idle' ? 'Visitor passing through…' : '2. Scan a visitor ticket'}
+                  </button>
+                  <p className="edge-demo-result" role="status">{sim3Message}</p>
+
+                  <div className="edge-demo-outbox">
+                    <div className="edge-demo-outbox-heading"><span><Cloud size={17} /> Local outbox</span><span>{sim3WalQueue.length} pending · {sim3Synced} synced</span></div>
+                    {sim3Syncing && <div className="edge-demo-sync"><ArrowRight size={16} /> Replaying events → Cloud acknowledgement</div>}
+                    <div className="edge-demo-events">
+                      {sim3WalQueue.length ? sim3WalQueue.map((event) => <div key={event}><span className="edge-demo-pending" />{event}</div>) : <div><CheckCircle2 size={15} /> No pending events</div>}
+                    </div>
                   </div>
-                  <div
-                    style={{
-                      maxHeight: '120px',
-                      overflowY: 'auto',
-                      padding: '0.65rem',
-                      background: 'var(--bg-terminal)',
-                      borderRadius: 'var(--radius-xs)',
-                      fontSize: '0.72rem',
-                      color: 'var(--copper-warm-bright)',
-                    }}
-                  >
-                    {sim3WalQueue.length === 0 ? (
-                      <span style={{ color: 'var(--text-tertiary)' }}>No pending entries. Reconnection simulates acknowledgement and clears this in-memory queue.</span>
-                    ) : (
-                      sim3WalQueue.map((wal, idx) => <div key={idx}>{wal}</div>)
-                    )}
-                  </div>
+                  <p className="edge-demo-note">* Scripted browser model: tickets are assumed valid. Usage and outbox events exist only in memory; no hardware or durable storage is involved.</p>
                 </div>
               )}
             </div>

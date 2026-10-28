@@ -8,14 +8,7 @@ export const OriginHero: React.FC = () => {
   return (
     <section id="origin" className="section" style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', paddingTop: '6rem' }}>
       <div className="container" style={{ width: '100%' }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-            gap: '3.5rem',
-            alignItems: 'center',
-          }}
-        >
+        <div className="hero-exhibit-grid">
           {/* Left Column: Manifesto & Narrative */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -30,7 +23,7 @@ export const OriginHero: React.FC = () => {
 
             <div className="candidate-identity">
               <p>{PERSONAL_INFO.name}</p>
-              <span>Fullstack Software Engineer</span>
+              <span>Software Engineer</span>
             </div>
 
             {/* Exhibition Monolithic Title */}
@@ -137,18 +130,12 @@ export const OriginHero: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Right Column: Manchester United crest */}
+          {/* Right Column: Cybernetic System Architecture Exhibit */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: 'relative',
-              height: 'var(--hero-sculpture-height)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="hero-exhibit-column"
           >
             <SculptureCanvas />
           </motion.div>
