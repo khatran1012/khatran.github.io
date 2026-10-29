@@ -204,6 +204,11 @@ export const SculptureCanvas: React.FC = () => {
           {/* Razor-Sharp Ultra-HD Image Presentation */}
           <picture className="cyber-core-picture">
             <source
+              type="image/avif"
+              srcSet="./hero-anatomy-core-640.avif 640w, ./hero-anatomy-core-1280.avif 1280w"
+              sizes="(min-width: 1260px) 605px, (min-width: 1024px) 48vw, calc(100vw - 48px)"
+            />
+            <source
               type="image/webp"
               srcSet="./hero-anatomy-core-640.webp 640w, ./hero-anatomy-core-1280.webp 1280w, ./hero-anatomy-core.webp 2048w"
               sizes="(min-width: 1260px) 605px, (min-width: 1024px) 48vw, calc(100vw - 48px)"
@@ -215,6 +220,7 @@ export const SculptureCanvas: React.FC = () => {
               width="2048"
               height="1152"
               loading="eager"
+              fetchPriority="high"
               decoding="async"
             />
           </picture>

@@ -17,11 +17,14 @@ export interface JourneyMotion {
   pitch: number;
   pointerX: number;
   pointerY: number;
+  focusDistance: number;
   selectedNode: string | null;
   hoveredNode: string | null;
 }
 
 export const JOURNEY_PHASES = ['Overview', 'Design', 'Logic', 'Bridge', 'Persistence', 'System'];
+// The final scroll interval reconnects the boards after visiting all five layers.
+export const JOURNEY_SCROLL_STEPS = JOURNEY_PHASES.length;
 
 export const BOARD_POSITIONS: JourneyPoint[] = [[-2.8, 0, 0], [2.8, 0.35, -4.8], [-2.8, -0.2, -9.6], [2.8, 0.15, -14.4], [-2.8, 0.8, -19.2]];
 export const ASSEMBLED_POSITIONS: JourneyPoint[] = [[-3.7, 1.9, -2.5], [-3.4, -1.55, -3.8], [0.1, 2, -5], [3.6, 1.8, -3.8], [3.4, -1.7, -2.5]];

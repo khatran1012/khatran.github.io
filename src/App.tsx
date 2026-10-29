@@ -22,7 +22,7 @@ export const App: React.FC = () => {
   }, [theme]);
 
   useEffect(() => {
-    const sections = document.querySelectorAll('main > section');
+    const sections = document.querySelectorAll('main > section, .cyber-exhibit');
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => entry.target.classList.toggle('is-offscreen', !entry.isIntersecting));
     }, { rootMargin: '80px' });

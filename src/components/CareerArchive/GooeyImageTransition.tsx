@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { MutableRefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -17,11 +17,13 @@ interface GooeyProps {
 }
 
 function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailable, onDisplay }: GooeyProps) {
-  const { invalidate, viewport, size } = useThree();
+  const { invalidate, viewport, size, gl } = useThree();
   const material = useRef<THREE.ShaderMaterial>(null);
   const textures = useRef(new Map<string, THREE.Texture>());
   const loading = useRef(new Map<string, Promise<THREE.Texture>>());
   const firstImage = useRef(initialImage);
+  const latestImage = useRef(image);
+  latestImage.current = image;
   const pending = useRef<{ image: string; texture: THREE.Texture } | null>(null);
   const current = useRef('');
   const destination = useRef('');
@@ -36,6 +38,13 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
     uProgress: { value: 0 }, uTime: { value: 0 }, uAspect: { value: 4 / 3 },
     uOrigin: { value: new THREE.Vector2(0.5, 0.5) },
   }), []);
+  const trimTextures = useCallback(() => {
+    const inUse = new Set([uniforms.uFrom.value, uniforms.uTo.value, pending.current?.texture, textures.current.get(latestImage.current)]);
+    for (const [url, texture] of textures.current) {
+      if (textures.current.size <= 3) break;
+      if (!inUse.has(texture)) { texture.dispose(); textures.current.delete(url); }
+    }
+  }, [uniforms]);
   const start = useRef(() => {});
   start.current = () => {
     if (!pending.current || tween.current || !activeRef.current) return;
@@ -65,6 +74,7 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
         onDisplay(next.image);
         invalidate();
         start.current();
+        trimTextures();
       },
       onReverseComplete: () => {
         uniforms.uTo.value = uniforms.uFrom.value;
@@ -74,13 +84,16 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
         onDisplay(current.current);
         invalidate();
         start.current();
+        trimTextures();
       },
     });
   };
   useEffect(() => {
     alive.current = true;
-    return () => { alive.current = false; tween.current?.kill(); textures.current.forEach(texture => texture.dispose()); textures.current.clear(); };
-  }, []);
+    const lost = (event: Event) => { event.preventDefault(); onUnavailable(); };
+    gl.domElement.addEventListener('webglcontextlost', lost);
+    return () => { alive.current = false; gl.domElement.removeEventListener('webglcontextlost', lost); tween.current?.kill(); textures.current.forEach(texture => texture.dispose()); textures.current.clear(); loading.current.clear(); };
+  }, [gl, onUnavailable]);
   useEffect(() => {
     const token = ++requested.current;
     const load = (url: string) => {
@@ -89,12 +102,16 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
       const existing = loading.current.get(url);
       if (existing) return existing;
       const promise = new THREE.TextureLoader().loadAsync(url).then(texture => {
+        loading.current.delete(url);
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.minFilter = THREE.LinearFilter;
         texture.generateMipmaps = false;
         if (!alive.current) texture.dispose();
-        else textures.current.set(url, texture);
+        else { textures.current.set(url, texture); trimTextures(); }
         return texture;
+      }).catch(error => {
+        loading.current.delete(url);
+        throw error;
       });
       loading.current.set(url, promise);
       return promise;
@@ -109,7 +126,7 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
         }
       }
       const texture = await load(image);
-      if (!alive.current || token !== requested.current) return;
+      if (!alive.current || token !== requested.current) { trimTextures(); return; }
       if (tween.current && (image === current.current || image === destination.current)) {
         pending.current = null;
         if (image === current.current) tween.current.reverse();
@@ -117,10 +134,10 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
         if (!activeRef.current) tween.current?.pause();
         return;
       }
-      pending.current = { image, texture }; start.current();
+      pending.current = { image, texture }; start.current(); trimTextures();
     };
     prepare().catch(() => { if (alive.current && token === requested.current) onUnavailable(); });
-  }, [image, onUnavailable]);
+  }, [image, onUnavailable, trimTextures]);
   useEffect(() => {
     if (active) { tween.current?.resume(); start.current(); invalidate(); }
     else tween.current?.pause();
@@ -137,8 +154,7 @@ function LiquidPlane({ image, initialImage, active, origin, onReady, onUnavailab
 
 export default function GooeyImageTransition(props: GooeyProps) {
   return <Canvas orthographic camera={{ position: [0, 0, 1], near: 0.1, far: 5 }} dpr={[1, 1.5]} frameloop="demand"
-    gl={{ alpha: false, antialias: false, powerPreference: 'low-power' }}
-    onCreated={({ gl }) => { gl.domElement.addEventListener('webglcontextlost', props.onUnavailable, { once: true }); }}>
+    gl={{ alpha: false, antialias: false, powerPreference: 'low-power' }}>
     <LiquidPlane {...props} />
   </Canvas>;
 }

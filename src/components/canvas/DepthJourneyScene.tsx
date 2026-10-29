@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EXHIBITION_LAYERS } from '../../data/cvData';
-import { ASSEMBLED_POSITIONS, BOARD_POSITIONS, JOURNEY_CONNECTIONS, JOURNEY_NODES } from '../../data/architectureJourney';
+import { ASSEMBLED_POSITIONS, BOARD_POSITIONS, JOURNEY_CONNECTIONS, JOURNEY_NODES, JOURNEY_SCROLL_STEPS } from '../../data/architectureJourney';
 import type { JourneyMotion, JourneyPoint } from '../../data/architectureJourney';
 
 interface SceneProps {
@@ -19,9 +19,10 @@ interface SceneProps {
 }
 
 const BOARD_ROTATIONS: JourneyPoint[] = BOARD_POSITIONS.map((_, index) => [-0.12, index % 2 ? -0.1 : 0.1, index % 2 ? 0.025 : -0.025]);
-const CAMERA_STOPS: JourneyPoint[] = [[13, 8, 13], [-2.7, 1.05, 5.8], [2.6, 1.3, 0.95], [-2.5, 0.9, -3.85], [2.6, 1.2, -8.65], [9, 6, 14]];
-const LOOK_STOPS: JourneyPoint[] = [[0, 0, -8], [-2.8, 0, 0], [2.8, 0.35, -4.8], [-2.8, -0.2, -9.6], [2.8, 0.15, -14.4], [0, 0, -3.5]];
+const CAMERA_STOPS: JourneyPoint[] = [[13, 8, 13], [-2.7, 1.05, 5.8], [2.6, 1.3, 0.95], [-2.5, 0.9, -3.85], [2.6, 1.2, -8.65], [-2.7, 1.85, -13.45], [9, 6, 14]];
+const LOOK_STOPS: JourneyPoint[] = [[0, 0, -8], [-2.8, 0, 0], [2.8, 0.35, -4.8], [-2.8, -0.2, -9.6], [2.8, 0.15, -14.4], [-2.8, 0.8, -19.2], [0, 0, -3.5]];
 const PCB_EXTRUSION = { depth: 0.14, bevelEnabled: true, bevelSegments: 2, bevelSize: 0.035, bevelThickness: 0.025, curveSegments: 4 };
+const NODE_TARGETS = new Map(JOURNEY_NODES.flatMap((nodes, board) => nodes.map((node) => [node.id, { node, board }] as const)));
 
 function labelTexture(title: string, subtitle: string, small = false) {
   const canvas = document.createElement('canvas');
@@ -52,6 +53,8 @@ function labelTexture(title: string, subtitle: string, small = false) {
 function PCB({ index, motion, onInspect }: Pick<SceneProps, 'motion' | 'onInspect'> & { index: number }) {
   const layer = EXHIBITION_LAYERS[index];
   const pins = useRef<THREE.InstancedMesh>(null);
+  const components = useRef<THREE.InstancedMesh>(null);
+  const mounts = useRef<THREE.InstancedMesh>(null);
   const nodes = JOURNEY_NODES[index];
   const textures = useMemo(() => [labelTexture(layer.slabLabel, layer.chipCaption), ...nodes.map((node) => labelTexture(node.label, '', true))], [layer, nodes]);
   useEffect(() => () => textures.forEach((texture) => texture.dispose()), [textures]);
@@ -77,6 +80,7 @@ function PCB({ index, motion, onInspect }: Pick<SceneProps, 'motion' | 'onInspec
     }
     return new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
   }, [nodes]);
+  useEffect(() => () => traces.dispose(), [traces]);
   useLayoutEffect(() => {
     if (!pins.current) return;
     const dummy = new THREE.Object3D();
@@ -95,7 +99,27 @@ function PCB({ index, motion, onInspect }: Pick<SceneProps, 'motion' | 'onInspec
       pins.current.setMatrixAt(i, dummy.matrix);
     }
     pins.current.instanceMatrix.needsUpdate = true;
-  }, []);
+    const parts = [
+      { position: [0.1, 0.05, 0.19], scale: [1.62, 1, 0.23], color: '#18201f' },
+      { position: [0, -1.21, 0.18], scale: [1.6, 0.2, 0.22], color: '#202927' },
+      { position: [0.2, 0.96, 0.17], scale: [1.45, 0.22, 0.14], color: '#19241e' },
+      ...Array.from({ length: 7 }, (_, item) => ({ position: [-1.5 + item * 0.46, -0.96, 0.18], scale: [0.19, 0.12, 0.12], color: item % 2 ? '#777c71' : '#282f2d' })),
+      ...nodes.map((node) => ({ position: [...node.position, 0.26], scale: [0.58, 0.4, 0.2], color: '#202b28' })),
+    ];
+    const color = new THREE.Color();
+    parts.forEach((part, index) => {
+      dummy.position.fromArray(part.position); dummy.scale.fromArray(part.scale); dummy.updateMatrix();
+      components.current?.setMatrixAt(index, dummy.matrix);
+      components.current?.setColorAt(index, color.set(part.color));
+    });
+    if (components.current) { components.current.instanceMatrix.needsUpdate = true; if (components.current.instanceColor) components.current.instanceColor.needsUpdate = true; }
+    dummy.scale.setScalar(1);
+    for (let i = 0; i < 4; i++) {
+      dummy.position.set((i < 2 ? -1 : 1) * 1.75, (i % 2 ? 1 : -1) * 1.03, 0.12); dummy.updateMatrix();
+      mounts.current?.setMatrixAt(i, dummy.matrix);
+    }
+    if (mounts.current) mounts.current.instanceMatrix.needsUpdate = true;
+  }, [nodes]);
   const hover = (node: string | null, element: HTMLElement) => {
     motion.current.hoveredNode = node;
     motion.current.interactionAt = performance.now();
@@ -103,6 +127,12 @@ function PCB({ index, motion, onInspect }: Pick<SceneProps, 'motion' | 'onInspec
   };
   return (
     <group rotation={BOARD_ROTATIONS[index]}>
+      <mesh visible={false} position={[0, 0, 0.15]}
+        onClick={(event) => { event.stopPropagation(); if (event.delta <= 5) onInspect(index, nodes[0].id); }}
+        onPointerOver={(event) => { (event.nativeEvent.target as HTMLElement).style.cursor = 'pointer'; }}
+        onPointerOut={(event) => { (event.nativeEvent.target as HTMLElement).style.cursor = ''; }}>
+        <boxGeometry args={[4, 2.6, 0.14]} />
+      </mesh>
       <mesh position={[0, 0, -0.07]}>
         <extrudeGeometry args={[shape, PCB_EXTRUSION]} />
         <meshStandardMaterial color="#071f18" metalness={0.18} roughness={0.7} envMapIntensity={0.3} />
@@ -118,42 +148,25 @@ function PCB({ index, motion, onInspect }: Pick<SceneProps, 'motion' | 'onInspec
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color="#b18b4f" metalness={0.85} roughness={0.28} envMapIntensity={0.7} />
       </instancedMesh>
-      {[-1, 1].flatMap((x) => [-1, 1].map((y) => (
-        <mesh key={`${x}-${y}`} position={[x * 1.75, y * 1.03, 0.12]}>
-          <torusGeometry args={[0.08, 0.025, 5, 12]} />
-          <meshStandardMaterial color="#d5bd88" metalness={0.7} roughness={0.3} />
-        </mesh>
-      )))}
-      <mesh position={[0.1, 0.05, 0.19]}>
-        <boxGeometry args={[1.62, 1, 0.23]} />
-        <meshStandardMaterial color="#18201f" metalness={0.45} roughness={0.4} />
-      </mesh>
+      <instancedMesh ref={mounts} args={[undefined, undefined, 4]}>
+        <torusGeometry args={[0.08, 0.025, 5, 12]} />
+        <meshStandardMaterial color="#d5bd88" metalness={0.7} roughness={0.3} />
+      </instancedMesh>
+      <instancedMesh ref={components} args={[undefined, undefined, 13]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial metalness={0.4} roughness={0.4} />
+      </instancedMesh>
       <mesh position={[0.1, 0.05, 0.31]}>
         <planeGeometry args={[1.45, 0.83]} />
         <meshBasicMaterial map={textures[0]} toneMapped={false} />
       </mesh>
-      <mesh position={[0, -1.21, 0.18]}>
-        <boxGeometry args={[1.6, 0.2, 0.22]} />
-        <meshStandardMaterial color="#202927" metalness={0.35} roughness={0.45} />
-      </mesh>
-      <mesh position={[0.2, 0.96, 0.17]}>
-        <boxGeometry args={[1.45, 0.22, 0.14]} />
-        <meshStandardMaterial color="#19241e" metalness={0.4} roughness={0.35} />
-      </mesh>
-      {Array.from({ length: 7 }, (_, item) => (
-        <mesh key={item} position={[-1.5 + item * 0.46, -0.96, 0.18]}>
-          <boxGeometry args={[0.19, 0.12, 0.12]} />
-          <meshStandardMaterial color={item % 2 ? '#777c71' : '#282f2d'} metalness={0.3} roughness={0.5} />
-        </mesh>
-      ))}
       {nodes.map((node, nodeIndex) => (
         <group key={node.id} position={[...node.position, 0.26]}
           onPointerOver={(event) => { event.stopPropagation(); hover(node.id, event.nativeEvent.target as HTMLElement); }}
           onPointerOut={(event) => { hover(null, event.nativeEvent.target as HTMLElement); }}
           onClick={(event) => { event.stopPropagation(); if (event.delta <= 5) onInspect(index, node.id); }}>
-          <mesh>
+          <mesh visible={false}>
             <boxGeometry args={[0.58, 0.4, 0.2]} />
-            <meshStandardMaterial color="#202b28" metalness={0.45} roughness={0.32} />
           </mesh>
           <mesh position={[0, 0, 0.105]}>
             <planeGeometry args={[0.52, 0.3]} />
@@ -179,12 +192,16 @@ function port(board: number, node: number, assembled: boolean) {
 function signalCurve(from: number, fromNode: number, to: number, toNode: number, assembled: boolean) {
   const start = port(from, fromNode, assembled);
   const end = port(to, toNode, assembled);
-  return new THREE.CatmullRomCurve3([start, start.clone().add(new THREE.Vector3(0, 0.8, -1.3)), end.clone().add(new THREE.Vector3(0, 0.8, 1.3)), end], false, 'centripetal');
+  const returnOffset = from > to ? 3 : 0;
+  return new THREE.CatmullRomCurve3([start, start.clone().add(new THREE.Vector3(returnOffset, 0.8, -1.3)), end.clone().add(new THREE.Vector3(returnOffset, 0.8, 1.3)), end], false, 'centripetal');
 }
 
-function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, onReady }: SceneProps) {
-  const { camera, scene, gl, invalidate, size } = useThree();
+function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, onReady, onUnavailable, onSlowFrames }: SceneProps & { onSlowFrames: () => void }) {
+  const { camera, scene, gl, invalidate, size, viewport } = useThree();
   const assembly = useRef<THREE.Group>(null);
+  const nodeLeds = useRef<THREE.Mesh[]>([]);
+  const compiled = useRef(false);
+  const slowFrames = useRef(0);
   const boards = useRef<(THREE.Group | null)[]>([]);
   const trails = useRef<(THREE.Mesh | null)[]>([]);
   const packets = useRef<(THREE.Mesh | null)[]>([]);
@@ -192,7 +209,7 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
   const velocity = useRef(0);
   const look = useRef(new THREE.Vector3(...LOOK_STOPS[0]));
   const signalTime = useRef(0);
-  const scratch = useMemo(() => ({ camera: new THREE.Vector3(), look: new THREE.Vector3(), start: new THREE.Vector3(), end: new THREE.Vector3(), color: new THREE.Color(), mood: new THREE.Color() }), []);
+  const scratch = useMemo(() => ({ camera: new THREE.Vector3(), look: new THREE.Vector3(), start: new THREE.Vector3(), end: new THREE.Vector3(), normal: new THREE.Vector3(), rotation: new THREE.Euler(), color: new THREE.Color(), mood: new THREE.Color() }), []);
   const signals = useMemo(() => JOURNEY_CONNECTIONS.map((connection) => {
     const path = signalCurve(connection.from, connection.fromNode, connection.to, connection.toNode, false);
     const endPath = signalCurve(connection.from, connection.fromNode, connection.to, connection.toNode, true);
@@ -203,17 +220,26 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
     assembled.dispose();
     return { path, endPath, geometry, connection };
   }), []);
+  useLayoutEffect(() => {
+    nodeLeds.current = [];
+    assembly.current?.traverse((object) => { if (object instanceof THREE.Mesh && object.name.startsWith('node:')) nodeLeds.current.push(object); });
+  }, []);
+  useEffect(() => () => signals.forEach((signal) => signal.geometry.dispose()), [signals]);
   useEffect(() => {
+    let cancelled = false;
+    compiled.current = false;
     const room = new RoomEnvironment();
     const generator = new THREE.PMREMGenerator(gl);
-    const environment = generator.fromScene(room, 0.04);
+    const environment = generator.fromScene(room, 0.04, 0.1, 100, { size: 64 });
     scene.environment = environment.texture;
     scene.environmentIntensity = 0.45;
     room.dispose();
     generator.dispose();
-    onReady();
-    return () => { scene.environment = null; environment.dispose(); };
-  }, [gl, scene, onReady]);
+    gl.compileAsync(scene, camera).then(() => { if (!cancelled) { compiled.current = true; invalidate(); onReady(); } }).catch(() => { if (!cancelled) onUnavailable(); });
+    const lost = (event: Event) => { event.preventDefault(); onUnavailable(); };
+    gl.domElement.addEventListener('webglcontextlost', lost);
+    return () => { cancelled = true; gl.domElement.removeEventListener('webglcontextlost', lost); scene.environment = null; environment.dispose(); };
+  }, [gl, scene, camera, invalidate, onReady, onUnavailable]);
   useEffect(() => {
     wake.current = () => { if (active && !document.hidden) invalidate(); };
     wake.current();
@@ -223,20 +249,37 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
   }, [wake, active, invalidate, reducedMotion, theme]);
 
   useFrame((_, rawDelta) => {
-    if (!active || document.hidden || !assembly.current) return;
-    const delta = Math.min(rawDelta, 0.05);
+    if (!active || document.hidden || !assembly.current || !compiled.current) return;
+    if (viewport.dpr > 1 && rawDelta > 0) {
+      slowFrames.current = rawDelta > 1 / 40 ? slowFrames.current + 1 : Math.max(0, slowFrames.current - 1);
+      if (slowFrames.current >= 12) { slowFrames.current = 0; onSlowFrames(); }
+    }
+    const delta = Math.min(rawDelta, 0.1);
     const input = motion.current;
-    const targetProgress = reducedMotion ? Math.round(input.progress * 5) / 5 : input.progress;
+    const targetProgress = reducedMotion ? Math.round(input.progress * JOURNEY_SCROLL_STEPS) / JOURNEY_SCROLL_STEPS : input.progress;
     progress.current = reducedMotion ? targetProgress : THREE.MathUtils.damp(progress.current, targetProgress, 6, delta);
     if (Math.abs(progress.current - targetProgress) < 0.0001) progress.current = targetProgress;
     const freshVelocity = performance.now() - input.updatedAt < 100 ? input.velocity : 0;
     velocity.current = reducedMotion ? 0 : THREE.MathUtils.damp(velocity.current, freshVelocity, 8, delta);
     if (Math.abs(velocity.current) < 0.0005) velocity.current = 0;
     const p = THREE.MathUtils.clamp(progress.current, 0, 1);
-    const step = Math.min(4, Math.floor(p * 5));
-    const blend = THREE.MathUtils.smoothstep(p * 5 - step, 0, 1);
+    const travel = p * JOURNEY_SCROLL_STEPS;
+    const phase = Math.min(5, Math.round(travel));
+    const step = Math.min(JOURNEY_SCROLL_STEPS - 1, Math.floor(travel));
+    const closing = THREE.MathUtils.smoothstep(travel, 5.5, JOURNEY_SCROLL_STEPS);
+    const blend = step === 5 ? closing : THREE.MathUtils.smoothstep(travel - step, 0, 1);
     scratch.camera.fromArray(CAMERA_STOPS[step]).lerp(scratch.end.fromArray(CAMERA_STOPS[step + 1]), blend);
     scratch.look.fromArray(LOOK_STOPS[step]).lerp(scratch.end.fromArray(LOOK_STOPS[step + 1]), blend);
+    const focus = input.selectedNode ? NODE_TARGETS.get(input.selectedNode) : undefined;
+    if (focus && Math.abs(travel - focus.board - 1) < 0.15) {
+      const { node: focusNode, board: focusBoard } = focus;
+      scratch.rotation.fromArray(BOARD_ROTATIONS[focusBoard]);
+      scratch.look.set(focusNode.position[0] * 0.7, focusNode.position[1] * 0.7, 0.26).applyEuler(scratch.rotation);
+      scratch.look.add(scratch.start.fromArray(BOARD_POSITIONS[focusBoard]).lerp(scratch.end.fromArray(ASSEMBLED_POSITIONS[focusBoard]), closing));
+      scratch.look.applyEuler(assembly.current.rotation);
+      scratch.normal.set(0, 0, 1).applyEuler(scratch.rotation).applyEuler(assembly.current.rotation);
+      scratch.camera.copy(scratch.look).addScaledVector(scratch.normal, input.focusDistance);
+    }
     if (size.width < 600) scratch.camera.z += 1.2;
     if (!reducedMotion) {
       scratch.camera.x += input.pointerX * 0.12;
@@ -246,12 +289,11 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
     else { camera.position.lerp(scratch.camera, 1 - Math.exp(-8 * delta)); look.current.lerp(scratch.look, 1 - Math.exp(-8 * delta)); }
     camera.lookAt(look.current);
     camera.rotateZ(velocity.current * 0.014);
-    const overviewWeight = 1 - THREE.MathUtils.smoothstep(p, 0.02, 0.18) + THREE.MathUtils.smoothstep(p, 0.9, 1);
+    const overviewWeight = input.selectedNode ? 0 : 1 - THREE.MathUtils.smoothstep(travel, 0.1, 0.9) + closing;
     const yaw = reducedMotion ? 0 : input.yaw * overviewWeight + velocity.current * 0.035;
     const pitch = reducedMotion ? 0 : input.pitch * overviewWeight;
     assembly.current.rotation.y = THREE.MathUtils.damp(assembly.current.rotation.y, yaw, 8, delta);
     assembly.current.rotation.x = THREE.MathUtils.damp(assembly.current.rotation.x, pitch, 8, delta);
-    const closing = THREE.MathUtils.smoothstep(p, 0.82, 1);
     boards.current.forEach((board, index) => {
       board?.position.fromArray(BOARD_POSITIONS[index]).lerp(scratch.end.fromArray(ASSEMBLED_POSITIONS[index]), closing);
     });
@@ -269,16 +311,17 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
       if (!packet) return;
       packet.visible = energy > 0;
       const t = (signalTime.current + index * 0.19) % 1;
-      path.getPointAt(t, scratch.start);
-      endPath.getPointAt(t, scratch.end);
-      packet.position.copy(scratch.start.lerp(scratch.end, closing));
+      if (energy > 0) {
+        path.getPointAt(t, scratch.start);
+        endPath.getPointAt(t, scratch.end);
+        packet.position.copy(scratch.start.lerp(scratch.end, closing));
+      }
       packet.scale.setScalar(0.75 + energy * 0.5);
       const material = packet.material as THREE.MeshBasicMaterial;
       material.opacity = energy;
-      if (trail) (trail.material as THREE.MeshBasicMaterial).opacity = Math.round(p * 5) === 0 || Math.round(p * 5) === 5 || connection.from === Math.round(p * 5) - 1 ? 0.85 : 0.25;
+      if (trail) (trail.material as THREE.MeshBasicMaterial).opacity = phase === 0 || phase === 5 || connection.from === phase - 1 ? 0.85 : 0.25;
     });
-    assembly.current.traverse((object) => {
-      if (!(object instanceof THREE.Mesh) || !object.name.startsWith('node:')) return;
+    nodeLeds.current.forEach((object) => {
       const selected = object.name.slice(5) === input.selectedNode || object.name.slice(5) === input.hoveredNode;
       (object.material as THREE.MeshStandardMaterial).emissiveIntensity = selected ? 3 + energy : 0.9 + energy * 0.4;
       object.scale.setScalar(selected ? 1.5 : 1);
@@ -288,7 +331,8 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
       || velocity.current !== 0 || energy > 0 || Math.abs((scene.background as THREE.Color).r - scratch.mood.r)
         + Math.abs((scene.background as THREE.Color).g - scratch.mood.g) + Math.abs((scene.background as THREE.Color).b - scratch.mood.b) > 0.0001;
     if (moving && !reducedMotion) invalidate();
-  });
+    gl.render(scene, camera);
+  }, 1);
 
   return (
     <>
@@ -325,12 +369,13 @@ function HardwareWorld({ motion, wake, active, reducedMotion, theme, onInspect, 
 }
 
 export default function DepthJourneyScene(props: SceneProps) {
+  const [dpr, setDpr] = useState(() => Math.min(window.devicePixelRatio, matchMedia('(pointer: coarse)').matches ? 1.25 : 1.5));
+  const reduceResolution = useCallback(() => setDpr(1), []);
   return (
-    <Canvas camera={{ position: CAMERA_STOPS[0], fov: 42, near: 0.1, far: 85 }} frameloop="demand" dpr={[1, 1.5]}
+    <Canvas camera={{ position: CAMERA_STOPS[0], fov: 42, near: 0.1, far: 85 }} frameloop={props.active ? 'demand' : 'never'} dpr={dpr}
       gl={{ antialias: true, alpha: false, powerPreference: 'low-power' }}
-      fallback={<p>Explore the architecture using the stage tabs.</p>}
-      onCreated={({ gl }) => { gl.domElement.addEventListener('webglcontextlost', props.onUnavailable, { once: true }); }}>
-      <HardwareWorld {...props} />
+      fallback={<p>Explore the architecture using the stage tabs.</p>}>
+      <HardwareWorld {...props} onSlowFrames={reduceResolution} />
     </Canvas>
   );
 }

@@ -2,9 +2,9 @@ import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState } f
 import type { ReactNode, PointerEvent } from 'react';
 import type { ScrollTrigger as ScrollTriggerInstance } from 'gsap/ScrollTrigger';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown, ArrowRight, ChevronLeft, ChevronRight, Layers, MoveUpRight, RotateCcw } from 'lucide-react';
+import { ArrowDown, ArrowRight, ChevronLeft, ChevronRight, Layers, Minus, MoveUpRight, Plus, RotateCcw, ZoomOut } from 'lucide-react';
 import { EXHIBITION_LAYERS } from '../data/cvData';
-import { JOURNEY_CONNECTIONS, JOURNEY_NODES, JOURNEY_PHASES } from '../data/architectureJourney';
+import { JOURNEY_CONNECTIONS, JOURNEY_NODES, JOURNEY_PHASES, JOURNEY_SCROLL_STEPS } from '../data/architectureJourney';
 import type { JourneyMotion } from '../data/architectureJourney';
 
 const DepthJourneyScene = lazy(() => import('./canvas/DepthJourneyScene'));
@@ -20,13 +20,14 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const inspectorRef = useRef<HTMLDivElement>(null);
+  const visualRef = useRef<HTMLDivElement>(null);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const triggerRef = useRef<ScrollTriggerInstance | null>(null);
   const phaseRef = useRef(0);
   const queuedPhase = useRef<number | null>(null);
   const requestedNode = useRef<{ phase: number; node: string } | null>(null);
   const wake = useRef(() => {});
-  const input = useRef<JourneyMotion>({ progress: 0, velocity: 0, updatedAt: 0, interactionAt: 0, yaw: 0, pitch: 0, pointerX: 0, pointerY: 0, selectedNode: null, hoveredNode: null });
+  const input = useRef<JourneyMotion>({ progress: 0, velocity: 0, updatedAt: 0, interactionAt: 0, yaw: 0, pitch: 0, pointerX: 0, pointerY: 0, focusDistance: 3.6, selectedNode: null, hoveredNode: null });
   const drag = useRef<{ id: number; x: number; y: number; yaw: number; pitch: number; target: HTMLCanvasElement } | null>(null);
   const [phase, setPhase] = useState(0);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
   const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const [compact, setCompact] = useState(() => window.matchMedia('(max-height: 700px)').matches);
+  const [compact, setCompact] = useState(() => window.matchMedia('(max-height: 500px)').matches);
   const staticJourney = reducedMotion || unavailable || compact;
   const layerIndex = Math.max(0, phase - 1);
   const layer = EXHIBITION_LAYERS[layerIndex];
@@ -45,7 +46,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const smallViewport = window.matchMedia('(max-height: 700px)');
+    const smallViewport = window.matchMedia('(max-height: 500px)');
     const update = () => setReducedMotion(preference.matches);
     const resize = () => setCompact(smallViewport.matches);
     preference.addEventListener('change', update);
@@ -71,7 +72,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
       input.current.updatedAt = now;
       input.current.interactionAt = now;
       stageRef.current?.style.setProperty('--journey-progress', String(self.progress));
-      const next = Math.round(self.progress * 5);
+      const next = Math.min(5, Math.round(self.progress * JOURNEY_SCROLL_STEPS));
       if (phaseRef.current !== next) {
         phaseRef.current = next;
         setPhase(next);
@@ -79,7 +80,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
         setSelectedNode(selection);
         input.current.selectedNode = selection;
       }
-      if (requestedNode.current && Math.abs(self.progress - requestedNode.current.phase / 5) < 0.005) requestedNode.current = null;
+      if (requestedNode.current && Math.abs(self.progress - requestedNode.current.phase / JOURNEY_SCROLL_STEPS) < 0.005) requestedNode.current = null;
       wake.current();
     };
     Promise.all([import('gsap'), import('gsap/ScrollTrigger')]).then(([{ gsap }, { ScrollTrigger }]) => {
@@ -96,7 +97,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
       triggerRef.current = trigger;
       trigger.refresh();
       if (queuedPhase.current !== null) {
-        window.scrollTo({ top: trigger.start + queuedPhase.current / 5 * (trigger.end - trigger.start), behavior: 'instant' });
+        window.scrollTo({ top: trigger.start + queuedPhase.current / JOURNEY_SCROLL_STEPS * (trigger.end - trigger.start), behavior: 'instant' });
         queuedPhase.current = null;
       }
     }).catch((error: unknown) => { console.error('Architecture journey initialization failed', error); if (!cancelled) onUnavailable(); });
@@ -119,28 +120,58 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
   }, [selectedNode, reducedMotion]);
   useEffect(revealSelection, [revealSelection]);
 
+  const zoomNode = useCallback((delta: number) => {
+    const current = input.current;
+    const distance = Math.max(2.2, Math.min(9, current.focusDistance + delta));
+    if (distance === current.focusDistance) return false;
+    current.focusDistance = distance;
+    current.interactionAt = performance.now();
+    wake.current();
+    return true;
+  }, []);
+
+  useEffect(() => {
+    const visual = visualRef.current;
+    if (!visual || !selectedNode || !ready || unavailable) return;
+    const zoom = (event: WheelEvent) => {
+      if (event.ctrlKey || event.shiftKey || !event.deltaY) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? visual.clientHeight : 1;
+      if (zoomNode(Math.max(-120, Math.min(120, event.deltaY * unit)) * 0.006)) event.preventDefault();
+    };
+    visual.addEventListener('wheel', zoom, { passive: false });
+    return () => visual.removeEventListener('wheel', zoom);
+  }, [selectedNode, ready, unavailable, zoomNode]);
+
   const goToPhase = useCallback((next: number, nodeId: string | null = null) => {
     const target = Math.max(0, Math.min(5, next));
     setNear(true);
     requestedNode.current = nodeId ? { phase: target, node: nodeId } : null;
     setSelectedNode(nodeId);
     input.current.selectedNode = nodeId;
+    input.current.focusDistance = 3.6;
     input.current.hoveredNode = null;
     input.current.interactionAt = performance.now();
     const trigger = triggerRef.current;
     if (trigger && !staticJourney) {
-      window.scrollTo({ top: trigger.start + target / 5 * (trigger.end - trigger.start), behavior: 'smooth' });
+      window.scrollTo({ top: trigger.start + target / JOURNEY_SCROLL_STEPS * (trigger.end - trigger.start), behavior: 'smooth' });
     } else {
       if (!staticJourney) queuedPhase.current = target;
       phaseRef.current = target;
       setPhase(target);
-      input.current.progress = target / 5;
+      input.current.progress = target / JOURNEY_SCROLL_STEPS;
       input.current.velocity = 0;
-      stageRef.current?.style.setProperty('--journey-progress', String(target / 5));
+      stageRef.current?.style.setProperty('--journey-progress', String(target / JOURNEY_SCROLL_STEPS));
     }
     wake.current();
   }, [staticJourney]);
   const inspectNode = useCallback((board: number, nodeId: string) => goToPhase(board + 1, nodeId), [goToPhase]);
+  const resetFocus = () => {
+    requestedNode.current = null;
+    setSelectedNode(null);
+    input.current.selectedNode = null;
+    input.current.interactionAt = performance.now();
+    wake.current();
+  };
 
   const movePointer = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === 'mouse') {
@@ -191,13 +222,13 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
               ))}
             </div>
             <div className="journey-body">
-              <div className="journey-visual" onPointerMove={movePointer} onPointerDown={(event) => {
+              <div ref={visualRef} className="journey-visual" onPointerMove={movePointer} onPointerDown={(event) => {
                 if ((phase !== 0 && phase !== 5) || reducedMotion || event.button !== 0 || !(event.target instanceof HTMLCanvasElement)) return;
                 drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, yaw: input.current.yaw, pitch: input.current.pitch, target: event.target };
                 event.target.setPointerCapture(event.pointerId);
               }} onPointerUp={releasePointer} onPointerCancel={releasePointer} onLostPointerCapture={releasePointer}
                 onPointerLeave={() => { input.current.pointerX = 0; input.current.pointerY = 0; wake.current(); }}
-                role="group" aria-label="Interactive 3D architecture. Scroll or use the stage tabs, then select a chip to inspect its role.">
+                role="group" aria-label={selectedNode ? 'Node inspection. Scroll inside the scene or use the zoom buttons. Back to layer resumes the scroll journey.' : 'Interactive 3D architecture. Scroll or use the stage tabs, then select a chip to inspect its role.'}>
                 {near && !unavailable && <JourneyBoundary onUnavailable={onUnavailable}><Suspense fallback={null}>
                   <DepthJourneyScene motion={input} wake={wake} active={visible} reducedMotion={reducedMotion} theme={theme}
                     onInspect={inspectNode} onReady={onReady} onUnavailable={onUnavailable} />
@@ -208,14 +239,19 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
                   <p>{unavailable ? 'Choose a layer to explore its nodes, signal paths and engineering decisions.' : 'Five connected layers. From the first interaction to the physical world.'}</p>
                   <div>{EXHIBITION_LAYERS.map((item, index) => <button key={item.id} onClick={() => goToPhase(index + 1)}>{item.slabLabel}<ArrowRight size={12} /></button>)}</div>
                 </div>}
-                <div className="journey-scene-caption" aria-hidden="true"><span>0{phase} / 05</span><strong>{JOURNEY_PHASES[phase]}</strong><span>{unavailable ? 'EXPLORE WITH THE TABS' : (phase === 0 || phase === 5) && !reducedMotion ? 'DRAG TO ORBIT' : 'SELECT A CHIP'}</span></div>
+                <div className="journey-scene-caption" aria-hidden="true"><span>0{phase} / 05</span><strong>{JOURNEY_PHASES[phase]}</strong><span>{unavailable ? 'EXPLORE WITH THE TABS' : selectedNode ? `INSPECTING ${node?.label ?? ''} · SCROLL TO ZOOM` : phase === 0 && !reducedMotion ? 'DRAG TO ORBIT · CLICK A BOARD TO INSPECT' : 'SELECT A CHIP TO ZOOM IN'}</span></div>
+                {selectedNode && !unavailable && <div className="journey-focus-controls" role="group" aria-label="Node camera controls">
+                  <button type="button" aria-label="Zoom in on node" onClick={() => zoomNode(-0.6)}><Plus size={16} /></button>
+                  <button type="button" aria-label="Zoom out from node" onClick={() => zoomNode(0.6)}><Minus size={16} /></button>
+                  <button type="button" className="journey-reset-focus" onClick={resetFocus}><ZoomOut size={15} />Back to layer</button>
+                </div>}
               </div>
               <div ref={inspectorRef} id="journey-inspection" className="journey-inspector" role="tabpanel" aria-labelledby={`journey-tab-${phase}`} tabIndex={0}>
                 <AnimatePresence initial={false} mode="wait">
                   <motion.div key={phase} initial={{ opacity: 0, y: reducedMotion ? 0 : 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.14 }} onAnimationComplete={revealSelection}>
-                    <p className="journey-eyebrow">{phase === 0 ? 'THE BIG PICTURE' : phase === 5 ? 'THE CONNECTED SYSTEM' : `LAYER 0${phase} / INSPECTION`}</p>
-                    <h3>{phase === 0 ? 'One system. Five responsibilities.' : phase === 5 ? 'Connected as one.' : layer.title}</h3>
-                    <p className="journey-summary">{phase === 0 ? 'Scroll to move through the architecture, or take a shortcut with the stage tabs. Every board has real nodes you can inspect.' : phase === 5 ? 'Interfaces, application state, services, durable data and physical gateways reconnect into one architecture. Inspect the edge nodes, revisit a layer, or continue to the next chapter.' : layer.architecturalRole}</p>
+                    <p className="journey-eyebrow">{phase === 0 ? 'THE BIG PICTURE' : `LAYER 0${phase} / INSPECTION`}</p>
+                    <h3>{phase === 0 ? 'One system. Five responsibilities.' : layer.title}</h3>
+                    <p className="journey-summary">{phase === 0 ? 'Scroll to move through the architecture, or take a shortcut with the stage tabs. Every board has real nodes you can inspect.' : layer.architecturalRole}</p>
                     {phase === 0 ? <div className="journey-overview-list">{EXHIBITION_LAYERS.map((item, index) => <button key={item.id} onClick={() => goToPhase(index + 1)}><span>{item.number}</span><div><strong>{item.slabLabel}</strong><small>{item.chipCaption}</small></div><ChevronRight size={14} /></button>)}</div> : <>
                       <div className="journey-node-list" role="group" aria-label="Inspect module nodes">{JOURNEY_NODES[layerIndex].map((item) => <button key={item.id} type="button" aria-pressed={selectedNode === item.id} onClick={() => inspectNode(layerIndex, item.id)}><span />{item.label}</button>)}</div>
                       <div className="journey-node-detail" role="status"><strong>{node?.title ?? 'Select a node'}</strong><p>{node?.description ?? 'Select an illuminated chip in the scene or use the node buttons above.'}</p></div>
@@ -228,7 +264,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
               </div>
             </div>
             <div className="journey-footer">
-              <p><ArrowDown size={14} />{staticJourney ? 'Choose a stage to explore' : phase === 5 ? 'Journey complete. Continue to Chapter 03.' : 'Scroll to travel deeper. Select a node to inspect.'}</p>
+              <p><ArrowDown size={14} />{selectedNode && !unavailable ? 'Scroll inside the scene to zoom. Back to layer to continue.' : staticJourney ? 'Choose a stage to explore' : phase === 5 ? 'Scroll to reconnect the full system, then continue to Chapter 03.' : 'Scroll to travel deeper. Select a node to inspect.'}</p>
               <div><button type="button" onClick={() => goToPhase(0)} aria-label="Return to architecture overview"><RotateCcw size={15} /></button><button type="button" disabled={phase === 0} onClick={() => goToPhase(phase - 1)} aria-label="Previous architecture stage"><ChevronLeft size={17} /></button><button type="button" disabled={phase === 5} onClick={() => goToPhase(phase + 1)} aria-label="Next architecture stage"><ChevronRight size={17} /></button></div>
             </div>
             <div className="journey-progress" role="progressbar" aria-label="Architecture journey progress" aria-valuemin={0} aria-valuemax={5} aria-valuenow={phase} aria-valuetext={JOURNEY_PHASES[phase]}><span /></div>

@@ -774,6 +774,7 @@ footer a span { min-width: 0; overflow-wrap: anywhere; }
 
 /* Keep decorative animation work near the viewport and stop it in hidden tabs. */
 .section.is-offscreen *, .section.is-offscreen *::before, .section.is-offscreen *::after,
+.cyber-exhibit.is-offscreen *, .cyber-exhibit.is-offscreen *::before, .cyber-exhibit.is-offscreen *::after,
 .page-hidden *, .page-hidden *::before, .page-hidden *::after { animation-play-state: paused !important; }
 
 /* Offline gateway workbench */
@@ -1338,10 +1339,14 @@ footer a span { min-width: 0; overflow-wrap: anywhere; }
 .journey-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(290px, 29%); flex: 1; min-height: 0; }
 .journey-visual { min-width: 0; min-height: 0; position: relative; overflow: hidden; background: var(--bg-blueprint); touch-action: pan-y; }
 .journey-visual canvas { touch-action: pan-y; outline: none; }
-.journey-scene-caption { position: absolute; top: 1.5rem; left: 1.5rem; display: grid; gap: 0.3rem; pointer-events: none; color: var(--text-ivory); }
+.journey-scene-caption { position: absolute; top: 1.5rem; left: 1.5rem; display: grid; gap: 0.3rem; max-width: calc(100% - 3rem); padding: 0.65rem 0.8rem; border: 1px solid var(--border-arch); border-radius: var(--radius-sm); background: var(--bg-glass); pointer-events: none; color: var(--text-ivory); }
 .journey-scene-caption > span:first-child { font: 0.65rem var(--font-mono); color: var(--text-secondary); letter-spacing: 0.12em; }
 .journey-scene-caption strong { font: 700 clamp(1.4rem, 3vw, 2.4rem)/1.15 var(--font-editorial); letter-spacing: -0.04em; }
 .journey-scene-caption > span:last-child { font: 0.55rem var(--font-mono); color: var(--text-tertiary); letter-spacing: 0.08em; }
+.journey-focus-controls { position: absolute; right: 1rem; bottom: 1rem; display: flex; gap: 0.35rem; }
+.journey-focus-controls button { display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 40px; min-height: 40px; padding: 0.65rem; border: 1px solid var(--copper-patina-border); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--copper-patina); font: 0.65rem var(--font-mono); cursor: pointer; box-shadow: var(--shadow-slab); }
+.journey-focus-controls button:hover { background: var(--bg-surface-elevated); }
+.journey-focus-controls .journey-reset-focus { padding-inline: 0.8rem; }
 .journey-inspector { min-width: 0; overflow-y: auto; padding: 1.5rem; border-left: 1px solid var(--border-arch); background: var(--bg-surface); scrollbar-width: thin; }
 .journey-inspector h3 { font: 700 clamp(1.15rem, 1.7vw, 1.6rem)/1.25 var(--font-display); color: var(--text-ivory); margin: 0.55rem 0 0.75rem; letter-spacing: -0.025em; }
 .journey-summary { font-size: 0.83rem; line-height: 1.75; color: var(--text-secondary); }
@@ -1385,7 +1390,7 @@ footer a span { min-width: 0; overflow-wrap: anywhere; }
 .journey-fallback > div:last-child { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-top: 1rem; }
 .journey-fallback button { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem; background: var(--bg-surface); color: var(--copper-patina); border: 1px solid var(--copper-patina-border); border-radius: var(--radius-xs); font: 0.6rem var(--font-mono); cursor: pointer; }
 @media (max-width: 800px) {
-  .journey-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(200px, 1fr) minmax(170px, 0.85fr); }
+  .journey-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(150px, 1fr) minmax(140px, 0.85fr); }
   .journey-inspector { padding: 1rem; border-left: 0; border-top: 1px solid var(--border-arch); }
   .journey-inspector h3 { font-size: 1.1rem; }
   .journey-toolbar { padding: 0.75rem; gap: 0.5rem; }
@@ -1403,6 +1408,6 @@ footer a span { min-width: 0; overflow-wrap: anywhere; }
   .journey-fallback-orbit { display: none; }
   .journey-fallback p { font-size: 0.72rem; }
 }
-@media (max-height: 700px) {
+@media (max-height: 500px) {
   .journey-track.is-static .journey-stage { height: 760px; }
 }

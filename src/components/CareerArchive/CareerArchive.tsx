@@ -6,6 +6,11 @@ import { CareerPreview } from './CareerPreview';
 import { ExperienceDetail } from './ExperienceDetail';
 import './career-archive.css';
 
+function LedRim() {
+  const id = `career-rim-${useId()}`;
+  return <svg className="career-led-rim" aria-hidden="true" focusable="false"><defs><linearGradient id={id} x2="1" y2="1"><stop stopColor="#2de2bd" /><stop offset="0.45" stopColor="#52a7ff" /><stop offset="0.75" stopColor="#dd7beb" /><stop offset="1" stopColor="#f4bd7c" /></linearGradient></defs><rect className="career-rim-base" width="100%" height="100%" rx="12" pathLength="100" stroke={`url(#${id})`} /><rect className="career-rim-packet" width="100%" height="100%" rx="12" pathLength="100" stroke={`url(#${id})`} /></svg>;
+}
+
 export function CareerArchive() {
   const section = useRef<HTMLDivElement>(null);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
@@ -47,16 +52,16 @@ export function CareerArchive() {
     const left = button.getBoundingClientRect().left - list.getBoundingClientRect().left + list.scrollLeft;
     list.scrollTo({ left: Math.max(0, left - (list.clientWidth - button.clientWidth) / 2), behavior: reduced ? 'instant' : 'smooth' });
   }, [currentIndex, reduced]);
-  const preview = (index: number) => { setPreviewed(index); intent(); };
+  const preview = (index: number) => { setPreviewed(index); if (index !== currentIndex) intent(); };
   const choose = (index: number) => { setSelected(index); setPreviewed(null); };
-  const chooseView = (next: 'artifact' | 'engineering') => { setSelected(currentIndex); setPreviewed(null); setView(next); intent(); };
+  const chooseView = (next: 'artifact' | 'engineering') => { setSelected(currentIndex); setPreviewed(null); setView(next); if (next !== view) intent(); };
   const open = () => { setSelected(currentIndex); setPreviewed(null); setDetailImage(engineering ? exhibit.diagram : exhibit.image); setDetail(currentIndex); };
   return <LayoutGroup id={group}>
-    <div ref={section} id="career-archive" className="career-snapshot career-archive" aria-labelledby="career-archive-title">
+    <div ref={section} id="career-archive" className="career-snapshot career-archive" data-animated={visible && !hidden && detail === null && !reduced} aria-labelledby="career-archive-title">
       <div className="career-archive-heading"><div><p className="career-kicker"><CircleDot size={13} />CHAPTER 01 / CAREER ARCHIVE</p><h2 id="career-archive-title">Selected <span>experience.</span></h2></div><p>2016 — Present<span>Five chapters. A growing practice.</span></p></div>
       <div className="career-archive-body" onPointerLeave={() => setPreviewed(null)}
         onBlur={event => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setPreviewed(null); }}>
-        <div className="career-company-picker"><p className="career-control-hint">01 / {finePointer ? 'Hover to preview · Click to select' : 'Tap to select a company'}</p>
+        <div className="career-company-picker"><LedRim /><p className="career-control-hint">01 / {finePointer ? 'Hover to preview · Click to select' : 'Tap to select a company'}</p>
         <ol className="career-list" aria-label="Select a company">
           {CAREER_ARCHIVE.map((item, index) => <motion.li key={item.id} initial={reduced ? false : { opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.4, delay: index * 0.045 }}>
             <button ref={element => { buttons.current[index] = element; }} type="button" aria-pressed={selected === index} data-previewed={currentIndex === index}
@@ -72,14 +77,15 @@ export function CareerArchive() {
                 else return;
                 event.preventDefault(); preview(next); buttons.current[next]?.focus({ preventScroll: true });
               }}>
-              <span className="career-number">{item.number}</span><span className="career-list-copy"><strong>{item.company}</strong><span className="career-list-period">{item.period}{item.isCurrent && <i>Current</i>}</span><span className="career-list-role">{item.role}</span></span>
+              <LedRim /><span className="career-number">{item.number}</span><span className="career-list-copy"><strong>{item.company}</strong><span className="career-list-period">{item.period}{item.isCurrent && <i>Current</i>}</span><span className="career-list-role">{item.role}</span></span>
               <span className="career-row-state">{selected === index ? <><Check size={15} /><small>Selected</small></> : currentIndex === index ? <><Eye size={15} /><small>Preview</small></> : <ArrowRight size={15} />}</span>
             </button>
           </motion.li>)}
         </ol></div>
         <div className="career-exhibit">
+          <LedRim />
           <div className="career-exhibit-bar"><span>{currentIndex === selected ? 'SELECTED' : 'PREVIEW'} / {exhibit.number}</span><div aria-label="Artwork view"><button type="button" aria-pressed={!engineering} onClick={() => chooseView('artifact')}>Artwork</button><button type="button" aria-pressed={engineering} onClick={() => chooseView('engineering')}>System view</button></div></div>
-          <CareerPreview exhibit={exhibit} engineering={engineering} enabled={enabled && finePointer} visible={near && !hidden} expanded={detail !== null || !visible} reduced={reduced} onIntent={intent} />
+          <CareerPreview exhibit={exhibit} engineering={engineering} enabled={enabled && finePointer} visible={near && !hidden} expanded={detail !== null || !visible} reduced={reduced} />
           <div className="career-exhibit-copy" aria-live="polite">{CAREER_ARCHIVE.map((item, index) => <div key={item.id} className="career-readout" aria-hidden={index !== currentIndex}>
             <p className="career-current-company">{item.company}</p><p className="career-kicker">{item.category}</p><h3>{item.title}</h3>
             <div className="career-description-pair"><p aria-hidden={engineering}>{item.summary}</p><p aria-hidden={!engineering}>{item.engineering}</p></div>
