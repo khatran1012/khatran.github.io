@@ -1343,6 +1343,9 @@ footer a span { min-width: 0; overflow-wrap: anywhere; }
 .journey-scene-caption > span:first-child { font: 0.65rem var(--font-mono); color: var(--text-secondary); letter-spacing: 0.12em; }
 .journey-scene-caption strong { font: 700 clamp(1.4rem, 3vw, 2.4rem)/1.15 var(--font-editorial); letter-spacing: -0.04em; }
 .journey-scene-caption > span:last-child { font: 0.55rem var(--font-mono); color: var(--text-tertiary); letter-spacing: 0.08em; }
+.journey-stage:not([data-phase='0']) .journey-scene-caption { padding: 0.45rem 0.65rem; }
+.journey-stage:not([data-phase='0']) .journey-scene-caption strong { font-size: 1.25rem; }
+.journey-stage:not([data-phase='0']) .journey-scene-caption > span:last-child { display: none; }
 .journey-focus-controls { position: absolute; right: 1rem; bottom: 1rem; display: flex; gap: 0.35rem; }
 .journey-focus-controls button { display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 40px; min-height: 40px; padding: 0.65rem; border: 1px solid var(--copper-patina-border); border-radius: var(--radius-sm); background: var(--bg-surface); color: var(--copper-patina); font: 0.65rem var(--font-mono); cursor: pointer; box-shadow: var(--shadow-slab); }
 .journey-focus-controls button:hover { background: var(--bg-surface-elevated); }

@@ -203,7 +203,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
         <div ref={trackRef} id="architecture-stack" className={`journey-track ${staticJourney ? 'is-static' : ''}`}>
           <div ref={stageRef} className="journey-stage" data-phase={phase}>
             <div className="journey-toolbar">
-              <div><span className="journey-eyebrow">PCB DEPTH JOURNEY</span><strong>A journey through software architecture</strong></div>
+              <div><span className="journey-eyebrow">ARCHITECTURE GALAXY</span><strong>A journey through software architecture</strong></div>
               <a href="#pressure" className="journey-skip">Skip experience <MoveUpRight size={14} /></a>
             </div>
             <div className="journey-tabs" role="tablist" aria-label="Architecture journey stages">
@@ -228,7 +228,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
                 event.target.setPointerCapture(event.pointerId);
               }} onPointerUp={releasePointer} onPointerCancel={releasePointer} onLostPointerCapture={releasePointer}
                 onPointerLeave={() => { input.current.pointerX = 0; input.current.pointerY = 0; wake.current(); }}
-                role="group" aria-label={selectedNode ? 'Node inspection. Scroll inside the scene or use the zoom buttons. Back to layer resumes the scroll journey.' : 'Interactive 3D architecture. Scroll or use the stage tabs, then select a chip to inspect its role.'}>
+                role="group" aria-label={selectedNode ? 'Node inspection. Scroll inside the scene or use the zoom buttons. Back to layer resumes the scroll journey.' : 'Interactive 3D architecture. Scroll or use the stage tabs, then select a module to inspect its role.'}>
                 {near && !unavailable && <JourneyBoundary onUnavailable={onUnavailable}><Suspense fallback={null}>
                   <DepthJourneyScene motion={input} wake={wake} active={visible} reducedMotion={reducedMotion} theme={theme}
                     onInspect={inspectNode} onReady={onReady} onUnavailable={onUnavailable} />
@@ -239,7 +239,7 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
                   <p>{unavailable ? 'Choose a layer to explore its nodes, signal paths and engineering decisions.' : 'Five connected layers. From the first interaction to the physical world.'}</p>
                   <div>{EXHIBITION_LAYERS.map((item, index) => <button key={item.id} onClick={() => goToPhase(index + 1)}>{item.slabLabel}<ArrowRight size={12} /></button>)}</div>
                 </div>}
-                <div className="journey-scene-caption" aria-hidden="true"><span>0{phase} / 05</span><strong>{JOURNEY_PHASES[phase]}</strong><span>{unavailable ? 'EXPLORE WITH THE TABS' : selectedNode ? `INSPECTING ${node?.label ?? ''} · SCROLL TO ZOOM` : phase === 0 && !reducedMotion ? 'DRAG TO ORBIT · CLICK A BOARD TO INSPECT' : 'SELECT A CHIP TO ZOOM IN'}</span></div>
+                <div className="journey-scene-caption" aria-hidden="true"><span>0{phase} / 05</span><strong>{JOURNEY_PHASES[phase]}</strong><span>{unavailable ? 'EXPLORE WITH THE TABS' : selectedNode ? `INSPECTING ${node?.label ?? ''} · SCROLL TO ZOOM` : phase === 0 && !reducedMotion ? 'DRAG TO ORBIT · SELECT A MODULE TO INSPECT' : 'SELECT A NODE TO EXPLORE'}</span></div>
                 {selectedNode && !unavailable && <div className="journey-focus-controls" role="group" aria-label="Node camera controls">
                   <button type="button" aria-label="Zoom in on node" onClick={() => zoomNode(-0.6)}><Plus size={16} /></button>
                   <button type="button" aria-label="Zoom out from node" onClick={() => zoomNode(0.6)}><Minus size={16} /></button>
@@ -249,12 +249,12 @@ export const SystemAnatomy = ({ theme }: { theme: 'light' | 'dark' }) => {
               <div ref={inspectorRef} id="journey-inspection" className="journey-inspector" role="tabpanel" aria-labelledby={`journey-tab-${phase}`} tabIndex={0}>
                 <AnimatePresence initial={false} mode="wait">
                   <motion.div key={phase} initial={{ opacity: 0, y: reducedMotion ? 0 : 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: reducedMotion ? 0 : 0.14 }} onAnimationComplete={revealSelection}>
+                    {phase > 0 && (<div className="journey-node-list" role="group" aria-label="Inspect module nodes">{JOURNEY_NODES[layerIndex].map((item) => <button key={item.id} type="button" aria-pressed={selectedNode === item.id} onClick={() => inspectNode(layerIndex, item.id)}><span />{item.label}</button>)}</div>)}
                     <p className="journey-eyebrow">{phase === 0 ? 'THE BIG PICTURE' : `LAYER 0${phase} / INSPECTION`}</p>
                     <h3>{phase === 0 ? 'One system. Five responsibilities.' : layer.title}</h3>
-                    <p className="journey-summary">{phase === 0 ? 'Scroll to move through the architecture, or take a shortcut with the stage tabs. Every board has real nodes you can inspect.' : layer.architecturalRole}</p>
+                    <p className="journey-summary">{phase === 0 ? 'Scroll to move through the architecture, or take a shortcut with the stage tabs. Explore five titanium sculptures, from component trees to physical access.' : phase === 2 ? 'State at the core. Reducers compute updates; effects dispatch asynchronous results. Orbits represent responsibilities.' : layer.architecturalRole}</p>
                     {phase === 0 ? <div className="journey-overview-list">{EXHIBITION_LAYERS.map((item, index) => <button key={item.id} onClick={() => goToPhase(index + 1)}><span>{item.number}</span><div><strong>{item.slabLabel}</strong><small>{item.chipCaption}</small></div><ChevronRight size={14} /></button>)}</div> : <>
-                      <div className="journey-node-list" role="group" aria-label="Inspect module nodes">{JOURNEY_NODES[layerIndex].map((item) => <button key={item.id} type="button" aria-pressed={selectedNode === item.id} onClick={() => inspectNode(layerIndex, item.id)}><span />{item.label}</button>)}</div>
-                      <div className="journey-node-detail" role="status"><strong>{node?.title ?? 'Select a node'}</strong><p>{node?.description ?? 'Select an illuminated chip in the scene or use the node buttons above.'}</p></div>
+                      <div className="journey-node-detail" role="status"><strong>{node?.title ?? 'Select a node'}</strong><p>{node?.description ?? 'Select a node in the scene or use the node buttons above.'}</p></div>
                       <div className="journey-tags">{layer.technologies.map((technology) => <span key={technology}>{technology}</span>)}</div>
                     </>}
                     <div className="journey-signal-paths"><span className="journey-eyebrow">SIGNAL PATHS</span>{JOURNEY_CONNECTIONS.filter((connection) => phase === 0 || phase === 5 || connection.from === layerIndex || connection.to === layerIndex).map((connection) => <p key={connection.label}><ArrowRight size={12} />{connection.label}</p>)}</div>

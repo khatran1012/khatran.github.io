@@ -38,7 +38,7 @@ export const JOURNEY_NODES: JourneyNode[][] = [
   [
     { id: 'state', label: 'STATE', title: 'Application state', description: 'Redux, NgRx and RxJS coordinate shared state across commerce and enterprise workflows.', position: [-1.25, 0.65] },
     { id: 'effects', label: 'ASYNC', title: 'Asynchronous effects', description: 'API responses and user actions update explicit UI states. Cancellation and request ownership keep stale responses from replacing newer results.', position: [-1.15, -0.65] },
-    { id: 'rules', label: 'RULES', title: 'Workflow rules', description: 'Application workflows translate user actions into validated service requests. Durable financial and inventory rules remain enforced by backend services.', position: [1.3, 0.5] },
+    { id: 'rules', label: 'REDUCER', title: 'Pure state transitions', description: 'Reducers compute the next state from the current state and an action. Effects handle asynchronous work and dispatch result actions; selectors project state into views. Durable financial and inventory rules remain enforced by backend services.', position: [1.3, 0.5] },
   ],
   [
     { id: 'rest', label: 'API', title: 'REST / OpenAPI', description: 'Golang and Gin expose validated API contracts between operational portals, OTA partners and backend services.', position: [-1.25, 0.65] },
