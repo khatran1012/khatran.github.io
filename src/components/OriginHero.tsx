@@ -1,7 +1,8 @@
 import React from 'react';
 import { ArrowDown, Download, Layers, ShieldCheck, Cpu } from 'lucide-react';
-import { PERSONAL_INFO, EXPERIENCES } from '../data/cvData';
+import { PERSONAL_INFO } from '../data/cvData';
 import { SculptureCanvas } from './canvas/SculptureCanvas';
+import { CareerArchive } from './CareerArchive/CareerArchive';
 
 export const OriginHero: React.FC = () => {
   return (
@@ -130,19 +131,7 @@ export const OriginHero: React.FC = () => {
             <SculptureCanvas />
           </div>
         </div>
-        <div className="career-snapshot" aria-label="Career snapshot">
-          <div className="career-label">CAREER SNAPSHOT <span>Experience across product, services &amp; enterprise teams</span></div>
-          <div className="career-grid">
-            {EXPERIENCES.map((experience) => (
-              <article key={experience.id}>
-                <p className="career-period">{experience.period}</p>
-                <h2>{experience.company}</h2>
-                <p className="career-role">{experience.role}</p>
-                <p>{experience.summary}</p>
-              </article>
-            ))}
-          </div>
-        </div>
+        <CareerArchive />
       </div>
     </section>
   );
