@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { ArrowDown, Download, Layers, ShieldCheck, Cpu } from 'lucide-react';
 import { PERSONAL_INFO, EXPERIENCES } from '../data/cvData';
 import { SculptureCanvas } from './canvas/SculptureCanvas';
@@ -10,11 +9,7 @@ export const OriginHero: React.FC = () => {
       <div className="container" style={{ width: '100%' }}>
         <div className="hero-exhibit-grid">
           {/* Left Column: Manifesto & Narrative */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          >
+          <div className="hero-copy">
             {/* Exhibition Badge */}
             <div className="chapter-badge">
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--copper-patina)' }} />
@@ -128,17 +123,12 @@ export const OriginHero: React.FC = () => {
                 <span>Download CV (PDF)</span>
               </a>
             </div>
-          </motion.div>
+          </div>
 
           {/* Right Column: Cybernetic System Architecture Exhibit */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="hero-exhibit-column"
-          >
+          <div className="hero-exhibit-column">
             <SculptureCanvas />
-          </motion.div>
+          </div>
         </div>
         <div className="career-snapshot" aria-label="Career snapshot">
           <div className="career-label">CAREER SNAPSHOT <span>Experience across product, services &amp; enterprise teams</span></div>

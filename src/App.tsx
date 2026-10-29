@@ -9,20 +9,41 @@ import { ExhibitionFooter } from './components/ExhibitionFooter';
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('kt-exhibition-theme');
-    if (saved === 'dark' || saved === 'light') return saved;
-    return 'light';
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('kt-exhibition-theme', theme);
+    try {
+      localStorage.setItem('kt-exhibition-theme', theme);
+    } catch {
+      // Theme switching still works when browser storage is unavailable.
+    }
   }, [theme]);
+
+  useEffect(() => {
+    const sections = document.querySelectorAll('main > section');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.target.classList.toggle('is-offscreen', !entry.isIntersecting));
+    }, { rootMargin: '80px' });
+    sections.forEach((section) => observer.observe(section));
+    const updateVisibility = () => {
+      document.documentElement.classList.toggle('page-hidden', document.hidden);
+    };
+    updateVisibility();
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => {
+      observer.disconnect();
+      sections.forEach((section) => section.classList.remove('is-offscreen'));
+      document.removeEventListener('visibilitychange', updateVisibility);
+      document.documentElement.classList.remove('page-hidden');
+    };
+  }, []);
 
   useEffect(() => {
     if (!('IntersectionObserver' in window)) return;
     const blocks = document.querySelectorAll<HTMLElement>(
-      '#main-content > section:not(#origin) > .container > :not(.artifacts-grid):not(dialog), .artifacts-grid > .arch-slab, .career-snapshot',
+      '#main-content > section:not(#origin) > .container > :not(.artifacts-grid):not(.journey-track):not(dialog), .artifacts-grid > .arch-slab, .career-snapshot',
     );
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -30,7 +51,7 @@ export const App: React.FC = () => {
         entry.target.classList.add('scroll-revealed');
         observer.unobserve(entry.target);
       });
-    }, { rootMargin: '0px 0px -32px 0px', threshold: 0 });
+    }, { rootMargin: '0px 0px 64px 0px', threshold: 0 });
 
     blocks.forEach((block) => {
       // Keep content already on screen visible, including direct chapter links.
@@ -56,7 +77,7 @@ export const App: React.FC = () => {
         <OriginHero />
 
         {/* Chapter 02 — Inside the System */}
-        <SystemAnatomy />
+        <SystemAnatomy theme={theme} />
 
         {/* Chapter 03 — Decisions Under Pressure */}
         <PressureSimulations />

@@ -26,7 +26,8 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -49,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({ theme, toggleTheme }) => {
         backgroundColor: scrolled || mobileMenuOpen ? 'var(--bg-glass)' : 'transparent',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         borderBottom: `1px solid ${scrolled ? 'var(--border-arch)' : 'transparent'}`,
-        transition: 'all var(--trans-fast)',
+        transition: 'background-color var(--trans-fast), border-color var(--trans-fast)',
       }}
     >
       <div className="container">

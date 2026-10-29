@@ -203,12 +203,17 @@ export const SculptureCanvas: React.FC = () => {
         <div className="cyber-core-viewport">
           {/* Razor-Sharp Ultra-HD Image Presentation */}
           <picture className="cyber-core-picture">
-            <source type="image/webp" srcSet="./hero-anatomy-core.webp 2x, ./hero-anatomy-core.webp 1x" />
-            <source type="image/png" srcSet="./hero-anatomy-core.png 2x, ./hero-anatomy-core.png 1x" />
+            <source
+              type="image/webp"
+              srcSet="./hero-anatomy-core-640.webp 640w, ./hero-anatomy-core-1280.webp 1280w, ./hero-anatomy-core.webp 2048w"
+              sizes="(min-width: 1260px) 605px, (min-width: 1024px) 48vw, calc(100vw - 48px)"
+            />
             <img
               src="./hero-anatomy-core.png"
               alt="Kha Tran - Software Engineer - The Anatomy of Building Interactive Engineering Exhibit"
               className="cyber-core-img"
+              width="2048"
+              height="1152"
               loading="eager"
               decoding="async"
             />
@@ -563,6 +568,7 @@ export const SculptureCanvas: React.FC = () => {
               type="button"
               className={`cyber-action-btn ${neonActive ? 'active' : ''}`}
               onClick={() => setNeonActive((prev) => !prev)}
+              aria-pressed={neonActive}
               title={neonActive ? 'Tắt hiệu ứng luồng LED Neon' : 'Bật hiệu ứng luồng LED Neon'}
             >
               <Zap size={14} />
