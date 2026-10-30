@@ -15,6 +15,9 @@ export interface JourneyMotion {
   interactionAt: number;
   yaw: number;
   pitch: number;
+  panX: number;
+  panY: number;
+  panScale: number;
   pointerX: number;
   pointerY: number;
   focusDistance: number;
@@ -26,7 +29,17 @@ export const JOURNEY_PHASES = ['Overview', 'Design', 'Logic', 'Bridge', 'Persist
 // The final scroll interval reconnects the boards after visiting all five layers.
 export const JOURNEY_SCROLL_STEPS = JOURNEY_PHASES.length;
 
+// Hold the camera around each stop; ease through the space between layers.
+export function journeyTravel(progress: number) {
+  const travel = Math.max(0, Math.min(1, progress)) * JOURNEY_SCROLL_STEPS;
+  const step = Math.floor(travel);
+  if (step >= 5) return travel;
+  const t = Math.max(0, Math.min(1, (travel - step - 0.15) / 0.7));
+  return step + t * t * t * (t * (t * 6 - 15) + 10);
+}
+
 export const BOARD_POSITIONS: JourneyPoint[] = [[-2.8, 0, 0], [2.8, 0.35, -4.8], [-2.8, -0.2, -9.6], [2.8, 0.15, -14.4], [-2.8, 0.8, -19.2]];
+export const OVERVIEW_POSITIONS: JourneyPoint[] = [[-4.5, 1.8, 0], [-1.5, -1.8, 1], [0, 2.4, -2.6], [4.5, 1.6, -0.2], [3, -2.1, 0.8]];
 export const ASSEMBLED_POSITIONS: JourneyPoint[] = [[-3.7, 1.9, -2.5], [-3.4, -1.55, -3.8], [0.1, 2, -5], [3.6, 1.8, -3.8], [3.4, -1.7, -2.5]];
 
 export const JOURNEY_NODES: JourneyNode[][] = [

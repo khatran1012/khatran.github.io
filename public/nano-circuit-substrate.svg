@@ -1,0 +1,252 @@
+<svg viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg" width="1200" height="700">
+<style>.cyber-nano-led{color:#39e6cf;stroke:currentColor}.cyber-nano-led.led-1{color:#ffa34f}.cyber-nano-led.led-2{color:#719cff}.cyber-nano-chip.cyber-nano-led{stroke:none}</style>
+<defs>
+<linearGradient id="r0-metal" x2="0.8" y2="1">
+<stop stop-color="#34434b"/>
+<stop offset="0.5" stop-color="#101d22"/>
+<stop offset="1" stop-color="#253239"/>
+</linearGradient>
+<linearGradient id="r0-chip" x1="0" y1="1" x2="1" y2="0">
+<stop stop-color="#111d26"/>
+<stop offset="0.32" stop-color="#44535e"/>
+<stop offset="0.5" stop-color="#24313b"/>
+<stop offset="0.85" stop-color="#9ba8aa"/>
+<stop offset="1" stop-color="#f0d4a7"/>
+</linearGradient>
+<linearGradient id="r0-side" x2="0" y2="1">
+<stop stop-color="#59636b"/>
+<stop offset="0.35" stop-color="#18232b"/>
+<stop offset="1" stop-color="#070d12"/>
+</linearGradient>
+<linearGradient id="r0-specular" x1="0" x2="1">
+<stop stop-color="#ecf7ff" stop-opacity="0"/>
+<stop offset="0.5" stop-color="#fff2d6" stop-opacity="0.65"/>
+<stop offset="1" stop-color="#ecf7ff" stop-opacity="0"/>
+</linearGradient>
+<radialGradient id="r0-shadow">
+<stop stop-color="#00050a" stop-opacity="0.85"/>
+<stop offset="1" stop-color="#00050a" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="r0-key-light" cx="1" cy="0" r="1">
+<stop stop-color="#ffd9a0" stop-opacity="0.22"/>
+<stop offset="0.65" stop-color="#ffd9a0" stop-opacity="0"/>
+</radialGradient>
+<clipPath id="r0-chip-face">
+<rect x="4" y="-32" width="96" height="68" rx="3"/>
+</clipPath>
+<pattern id="r0-trace" width="150" height="100" patternUnits="userSpaceOnUse">
+<path d="M0 18H35L58 41H110V100M0 30H30L55 55H95V100M150 12H120L90 42H75V0M0 80H35L60 55" stroke="#608175" stroke-width="0.8" opacity="0.5"/>
+<path d="M0 90H42L70 62H150M140 0V30L113 57V100" stroke="#b28554" stroke-width="0.6" opacity="0.45"/>
+<g fill="#aabcaa">
+<circle cx="58" cy="41" r="2"/>
+<circle cx="90" cy="42" r="2"/>
+<circle cx="35" cy="80" r="2"/>
+</g>
+</pattern>
+<pattern id="r0-pins" width="12" height="12" patternUnits="userSpaceOnUse">
+<path d="M3 0V12" stroke="#c6a574" stroke-width="3"/>
+</pattern>
+</defs>
+<rect width="1200" height="700" fill="url(#r0-metal)"/>
+<rect width="1200" height="700" fill="url(#r0-trace)"/>
+<rect width="1200" height="700" fill="url(#r0-key-light)"/>
+<g class="cyber-nano-chip cyber-nano-led led-0" transform="translate(110 130) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-1" transform="translate(360 105) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-2" transform="translate(700 120) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-0" transform="translate(1010 175) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-1" transform="translate(150 505) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-2" transform="translate(430 540) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-0" transform="translate(765 510) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-1" transform="translate(1040 475) scale(0.58)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-chip cyber-nano-led led-2" transform="translate(505 275) scale(0.95)">
+<ellipse cx="35" cy="72" rx="95" ry="52" fill="url(#r0-shadow)" stroke="none"/>
+<rect x="-15" y="-16" width="138" height="112" rx="5" fill="#132029" stroke="#6c7e83" stroke-width="0.7"/>
+<rect x="-10" y="-12" width="124" height="100" rx="4" fill="url(#r0-pins)"/>
+<path d="M104 -36L116 -4V72L104 40Z" fill="#887d68" stroke="#c3baa3" stroke-width="0.6"/>
+<path d="M0 40H104L116 72H12Z" fill="url(#r0-side)" stroke="#4b5a64" stroke-width="0.7"/>
+<rect y="-36" width="104" height="76" rx="4" fill="#17232c" stroke="#aab8b9" stroke-width="1.2"/>
+<rect x="4" y="-32" width="96" height="68" rx="3" fill="url(#r0-chip)" stroke="#5a6f7b" stroke-width="0.8"/>
+<g clip-path="url(#r0-chip-face)" stroke="none">
+<path d="M-8 -32H20L100 36H72Z" fill="url(#r0-specular)" class="cyber-nano-specular"/>
+</g>
+<path d="M16 -15H70M16 -8H54M16 18H87" stroke="#09161d" stroke-width="2" opacity="0.75"/>
+<path d="M16 -14H70M16 -7H54M16 19H87M7 -31H98V33" stroke="#b6c7cf" stroke-width="0.6" opacity="0.7"/>
+<path d="M5 47H107M10 60H112" stroke="#75868c" stroke-width="0.6"/>
+<path d="M15 83H105" stroke="currentColor" stroke-width="14" opacity="0.08"/>
+<path d="M15 81H105" stroke="currentColor" stroke-width="4" opacity="0.18"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="5" opacity="0.2"/>
+<path d="M16 64H99" stroke="currentColor" stroke-width="1.6"/>
+</g>
+<g class="cyber-nano-led led-0">
+<path d="M0 220H210L285 295H470L540 365H780L910 235H1200" stroke="currentColor" stroke-width="1.4" opacity="0.55"/>
+</g>
+<g class="cyber-nano-led led-1">
+<path d="M0 440H185L280 345H450L540 255H815L940 380H1200" stroke="currentColor" stroke-width="1.4" opacity="0.55"/>
+</g>
+<g class="cyber-nano-led led-2">
+<path d="M80 0V145L255 320V590L145 700" stroke="currentColor" stroke-width="1.4" opacity="0.55"/>
+</g>
+<g class="cyber-nano-led led-0">
+<path d="M1120 0V160L945 335V560L1060 700" stroke="currentColor" stroke-width="1.4" opacity="0.55"/>
+</g>
+<g>
+<circle cx="65" cy="75" r="10" fill="#0a1318" stroke="#bb9e78" stroke-width="3"/>
+<path d="M61 75h8M65 71v8" stroke="#8fa09b"/>
+</g>
+<g>
+<circle cx="65" cy="625" r="10" fill="#0a1318" stroke="#bb9e78" stroke-width="3"/>
+<path d="M61 625h8M65 621v8" stroke="#8fa09b"/>
+</g>
+<g>
+<circle cx="1135" cy="75" r="10" fill="#0a1318" stroke="#bb9e78" stroke-width="3"/>
+<path d="M1131 75h8M1135 71v8" stroke="#8fa09b"/>
+</g>
+<g>
+<circle cx="1135" cy="625" r="10" fill="#0a1318" stroke="#bb9e78" stroke-width="3"/>
+<path d="M1131 625h8M1135 621v8" stroke="#8fa09b"/>
+</g>
+</svg>

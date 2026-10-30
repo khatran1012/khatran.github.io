@@ -6,7 +6,7 @@ import { CareerArchive } from './CareerArchive/CareerArchive';
 
 export const OriginHero: React.FC = () => {
   return (
-    <section id="origin" className="section" style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', paddingTop: '6rem' }}>
+    <section id="origin" className="section hero-section" style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', paddingTop: '6rem' }}>
       <div className="container" style={{ width: '100%' }}>
         <div className="hero-exhibit-grid">
           {/* Left Column: Manifesto & Narrative */}

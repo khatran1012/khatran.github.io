@@ -1,9 +1,11 @@
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { NanoCircuitBackdrop } from './NanoCircuitBackdrop';
 import {
   RotateCcw,
   ExternalLink,
   CheckCircle2,
   Zap,
+  X,
 } from 'lucide-react';
 
 export interface SystemNode {
@@ -30,8 +32,8 @@ const SYSTEM_NODES: SystemNode[] = [
     name: 'SYSTEM CORE',
     subTitle: 'Architecture & Engineering',
     category: 'CENTRAL PROCESSOR',
-    xPercent: 49.6,
-    yPercent: 42.0,
+    xPercent: 50,
+    yPercent: 49,
     color: 'cyan',
     hexColor: '#38efd8',
     badgeLabel: 'KT CHIP',
@@ -42,12 +44,12 @@ const SYSTEM_NODES: SystemNode[] = [
   },
   {
     id: 'frontend',
-    number: '01',
+    number: '02',
     name: 'FRONTEND',
     subTitle: 'React / TypeScript',
     category: 'DETERMINISTIC UI',
-    xPercent: 27.5,
-    yPercent: 22.5,
+    xPercent: 22,
+    yPercent: 24,
     color: 'cyan',
     hexColor: '#00f5d4',
     badgeLabel: 'REACT 19',
@@ -62,8 +64,8 @@ const SYSTEM_NODES: SystemNode[] = [
     name: 'BACKEND',
     subTitle: 'Golang / API Design',
     category: 'DISTRIBUTED SERVICES',
-    xPercent: 75.5,
-    yPercent: 30.0,
+    xPercent: 78,
+    yPercent: 24,
     color: 'amber',
     hexColor: '#ffaa22',
     badgeLabel: 'GOLANG GIN',
@@ -78,8 +80,8 @@ const SYSTEM_NODES: SystemNode[] = [
     name: 'INFRASTRUCTURE',
     subTitle: 'Cloud / DevOps',
     category: 'EDGE & CLUSTERS',
-    xPercent: 24.2,
-    yPercent: 64.5,
+    xPercent: 25,
+    yPercent: 75,
     color: 'amber',
     hexColor: '#ff9e2c',
     badgeLabel: 'K8S & EDGE',
@@ -94,8 +96,8 @@ const SYSTEM_NODES: SystemNode[] = [
     name: 'DATA',
     subTitle: 'PostgreSQL / Redis',
     category: 'TRANSACTIONAL INTEGRITY',
-    xPercent: 74.5,
-    yPercent: 71.0,
+    xPercent: 75,
+    yPercent: 75,
     color: 'cyan',
     hexColor: '#26e8db',
     badgeLabel: 'POSTGRES / REDIS',
@@ -106,531 +108,228 @@ const SYSTEM_NODES: SystemNode[] = [
   },
 ];
 
-export const SculptureCanvas: React.FC = () => {
-  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
-  const [neonActive, setNeonActive] = useState<boolean>(true);
-  const hudRef = useRef<HTMLDivElement>(null);
-  const viewerRef = useRef<HTMLDivElement>(null);
-  const exhibitRef = useRef<HTMLDivElement>(null);
-  const [signalPath, setSignalPath] = useState('');
+const MODULE_SIZES = {
+  core: '(min-width: 1520px) 165px, (min-width: 1280px) 12vw, (min-width: 760px) calc(27vw - 84px), (min-width: 601px) 27vw, 38vw',
+  other: '(min-width: 1520px) 135px, (min-width: 1280px) 10vw, (min-width: 760px) calc(22vw - 68px), (min-width: 601px) 22vw, 32vw',
+};
 
-  const activeNode = SYSTEM_NODES.find((n) => n.id === activeNodeId) || null;
+export const SculptureCanvas: React.FC = () => {
+  const [selection, setSelection] = useState<{ nodeId: string; run: number; arrived: boolean } | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [neonActive, setNeonActive] = useState(true);
+  const [signalPath, setSignalPath] = useState('');
+  const exhibitRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLSpanElement>(null);
+  const depthRef = useRef<HTMLDivElement>(null);
+  const frame = useRef(0);
+  const pointer = useRef({ x: 0, y: 0 });
+  const activeNodeId = selection?.nodeId ?? null;
+  const litNodeId = highlightedId ?? activeNodeId;
+  const selectedNode = SYSTEM_NODES.find(node => node.id === activeNodeId);
 
   useLayoutEffect(() => {
-    if (!activeNode || !hudRef.current) return;
-    const position = () => {
-      const anchor = viewerRef.current?.querySelector(`[data-node="${activeNode.id}"]`)?.getBoundingClientRect();
-      const card = hudRef.current?.getBoundingClientRect();
-      const exhibit = exhibitRef.current?.getBoundingClientRect();
-      if (!anchor || !card || !exhibit) return;
-      const startX = anchor.left + anchor.width / 2 - exhibit.left;
-      const startY = anchor.top + anchor.height / 2 - exhibit.top;
-      const endX = card.right - exhibit.left - 24;
-      const endY = card.top - exhibit.top;
-      const edgeX = exhibit.width + 12;
-      setSignalPath(`M ${startX} ${startY} H ${edgeX - 16} Q ${edgeX} ${startY} ${edgeX} ${startY + 16} V ${endY - 16} Q ${edgeX} ${endY} ${edgeX - 16} ${endY} H ${endX}`);
+    const exhibit = exhibitRef.current;
+    const viewport = depthRef.current;
+    const dock = dockRef.current;
+    const source = exhibit?.querySelector<HTMLButtonElement>(`[data-node="${selection?.nodeId}"]`);
+    if (!exhibit || !viewport || !dock || !source) {
+      setSignalPath('');
+      return;
+    }
+    const measure = () => {
+      const bounds = exhibit.getBoundingClientRect();
+      const origin = source.getBoundingClientRect();
+      const stage = viewport.getBoundingClientRect();
+      exhibit.style.setProperty('--hero-stage-top', `${stage.top - bounds.top}px`);
+      exhibit.style.setProperty('--hero-stage-height', `${stage.height}px`);
+      const destination = dock.getBoundingClientRect();
+      const x = origin.left + origin.width / 2 - bounds.left;
+      const y = origin.top + origin.height / 2 - bounds.top;
+      const endX = destination.left + destination.width / 2 - bounds.left;
+      const endY = destination.top + destination.height / 2 - bounds.top;
+      const bend = (endX - x) * 0.45;
+      setSignalPath(`M ${x.toFixed(1)} ${y.toFixed(1)} C ${(x + bend).toFixed(1)} ${y.toFixed(1)} ${(endX - bend).toFixed(1)} ${endY.toFixed(1)} ${endX.toFixed(1)} ${endY.toFixed(1)}`);
     };
-    position();
-    const dismiss = () => {
-      setActiveNodeId(null);
-    };
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.target instanceof Element && (event.target.closest('.cyber-hotspot-trigger, .cyber-tab-btn, .cyber-action-btn') || hudRef.current?.contains(event.target))) return;
-      dismiss();
-    };
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') dismiss();
-    };
-    window.addEventListener('resize', position);
-    window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('resize', position);
-      window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [activeNode]);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(exhibit);
+    observer.observe(viewport);
+    if (dock.parentElement) observer.observe(dock.parentElement);
+    return () => observer.disconnect();
+  }, [selection?.nodeId, selection?.run]);
 
-  const selectNode = (id: string | null) => {
-    setActiveNodeId((prev) => (prev === id ? null : id));
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+  useEffect(() => {
+    const preference = matchMedia('(prefers-reduced-motion: reduce)');
+    const finish = () => {
+      if (preference.matches) setSelection(current => current ? { ...current, arrived: true } : null);
+    };
+    preference.addEventListener('change', finish);
+    return () => preference.removeEventListener('change', finish);
+  }, []);
+
+  const selectNode = (nodeId: string) => setSelection(current => ({
+    nodeId,
+    run: (current?.run ?? 0) + 1,
+    arrived: !neonActive || matchMedia('(prefers-reduced-motion: reduce)').matches,
+  }));
+
+  const updateDepth = (x: number, y: number) => {
+    pointer.current = { x, y };
+    if (frame.current) return;
+    frame.current = requestAnimationFrame(() => {
+      depthRef.current?.style.setProperty('--hero-x', pointer.current.x.toFixed(3));
+      depthRef.current?.style.setProperty('--hero-y', pointer.current.y.toFixed(3));
+      frame.current = 0;
+    });
   };
 
   const resetView = () => {
-    setActiveNodeId(null);
+    setSelection(null);
+    setHighlightedId(null);
+    updateDepth(0, 0);
   };
 
   return (
-    <>
-      <div ref={exhibitRef} className={`cyber-exhibit ${neonActive ? '' : 'neon-paused'}`}>
-      <div ref={viewerRef} className={`cyber-core-viewer ${neonActive ? '' : 'neon-paused'}`} role="region" aria-label="Interactive System Architecture Exhibit">
-        {/* Top Console Bar */}
+    <div ref={exhibitRef} className={`cyber-exhibit ${neonActive ? '' : 'neon-paused'} ${selection && !selection.arrived ? 'is-routing' : ''}`} onKeyDown={event => {
+      if (event.key === 'Escape') resetView();
+    }}>
+      <div className="cyber-core-viewer" role="region" aria-label="Interactive System Architecture Exhibit">
         <div className="cyber-core-header">
           <div className="cyber-core-title">
             <span className="cyber-status-led" />
             <span className="cyber-title-main">KT-CORE // SYSTEM ANATOMY</span>
-            <span className="cyber-title-status">● LIVE LED CONDUITS</span>
+            <span className="cyber-title-status">{neonActive ? '● LIVE LED CONDUITS' : '● SIGNALS PAUSED'}</span>
           </div>
-
-          {/* Quick Node Switcher Tabs */}
-          <div className="cyber-node-tabs" role="group" aria-label="Filter architecture modules">
-            <button
-              type="button"
-              className={`cyber-tab-btn ${activeNodeId === null ? 'active' : ''}`}
-              onClick={() => selectNode(null)}
-              aria-pressed={activeNodeId === null}
-            >
-              ALL NODES
-            </button>
-            {SYSTEM_NODES.map((node) => {
-              const isSelected = activeNodeId === node.id;
-              return (
-                <button
-                  key={node.id}
-                  type="button"
-                  className={`cyber-tab-btn ${isSelected ? 'active' : ''} ${node.color}`}
-                  onClick={() => selectNode(node.id)}
-                  aria-pressed={isSelected}
-                  title={`${node.number} ${node.name} — ${node.subTitle}`}
-                >
-                  <span className="cyber-tab-num">{node.number}</span> {node.name.split(' ')[0]}
-                </button>
-              );
-            })}
+          <div className="cyber-node-tabs" role="group" aria-label="Select architecture module">
+            <button type="button" className={`cyber-tab-btn ${activeNodeId === null ? 'active' : ''}`}
+              onClick={resetView} aria-pressed={activeNodeId === null}>ALL NODES</button>
+            {SYSTEM_NODES.map(node => (
+              <button key={node.id} type="button" className={`cyber-tab-btn ${activeNodeId === node.id ? 'active' : ''} ${node.color}`}
+                onClick={() => selectNode(node.id)} aria-pressed={activeNodeId === node.id}
+                aria-controls="hero-module-detail" title={`${node.number} ${node.name} — ${node.subTitle}`}>
+                <span className="cyber-tab-num">{node.number}</span> {node.name.split(' ')[0]}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* 16:9 Interactive Motherboard Viewport */}
-        <div className="cyber-core-viewport">
-          {/* Razor-Sharp Ultra-HD Image Presentation */}
-          <picture className="cyber-core-picture">
-            <source
-              type="image/avif"
-              srcSet="./hero-anatomy-core-640.avif 640w, ./hero-anatomy-core-1280.avif 1280w"
-              sizes="(min-width: 1260px) 605px, (min-width: 1024px) 48vw, calc(100vw - 48px)"
-            />
-            <source
-              type="image/webp"
-              srcSet="./hero-anatomy-core-640.webp 640w, ./hero-anatomy-core-1280.webp 1280w, ./hero-anatomy-core.webp 2048w"
-              sizes="(min-width: 1260px) 605px, (min-width: 1024px) 48vw, calc(100vw - 48px)"
-            />
-            <img
-              src="./hero-anatomy-core.png"
-              alt="Kha Tran - Software Engineer - The Anatomy of Building Interactive Engineering Exhibit"
-              className="cyber-core-img"
-              width="2048"
-              height="1152"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </picture>
-
-          {/* SVG Glowing Neon LED Conduits & Dynamic Light Overlay */}
-          <svg
-            className={`cyber-svg-overlay ${neonActive ? 'neon-active' : ''}`}
-            viewBox="0 0 1024 576"
-            preserveAspectRatio="xMidYMid meet"
-            aria-hidden="true"
-          >
-            <defs>
-              {/* Cyan Glow Filters */}
-              <filter id="cyan-glow-intense" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="3" result="blur1" />
-                <feGaussianBlur stdDeviation="8" result="blur2" />
-                <feMerge>
-                  <feMergeNode in="blur2" />
-                  <feMergeNode in="blur1" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
-              {/* Amber Glow Filters */}
-              <filter id="amber-glow-intense" x="-60%" y="-60%" width="220%" height="220%">
-                <feGaussianBlur stdDeviation="3" result="blur1" />
-                <feGaussianBlur stdDeviation="8" result="blur2" />
-                <feMerge>
-                  <feMergeNode in="blur2" />
-                  <feMergeNode in="blur1" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-
-              {/* Conduits Gradients */}
-              <linearGradient id="grad-conduit-fe" x1="1" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="#38efd8" stopOpacity="0.85" />
-                <stop offset="60%" stopColor="#00f5d4" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
-              </linearGradient>
-
-              <linearGradient id="grad-conduit-be" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0%" stopColor="#ff9e2c" stopOpacity="0.85" />
-                <stop offset="60%" stopColor="#ffaa22" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
-              </linearGradient>
-
-              <linearGradient id="grad-conduit-infra" x1="1" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ff9e2c" stopOpacity="0.85" />
-                <stop offset="60%" stopColor="#ffb703" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
-              </linearGradient>
-
-              <linearGradient id="grad-conduit-data" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#38efd8" stopOpacity="0.85" />
-                <stop offset="60%" stopColor="#26e8db" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="1" />
-              </linearGradient>
-
-              {/* Vertical Beams */}
-              <linearGradient id="grad-beam-cyan" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="#00f5d4" stopOpacity="0.8" />
-                <stop offset="40%" stopColor="#38efd8" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </linearGradient>
-
-              <linearGradient id="grad-beam-amber" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="#ffaa22" stopOpacity="0.8" />
-                <stop offset="40%" stopColor="#ff9e2c" stopOpacity="0.4" />
-                <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-
-            {/* Ambient Concentric Orbit Rings around Center KT Core */}
-            <g className="neon-core-rings" opacity={neonActive ? '0.65' : '0.2'}>
-              <ellipse
-                cx="506"
-                cy="275"
-                rx="145"
-                ry="72"
-                fill="none"
-                stroke="#00f5d4"
-                strokeWidth="1.2"
-                strokeDasharray="4 8"
-                filter="url(#cyan-glow-intense)"
-                className="spin-cw"
-              />
-              <ellipse
-                cx="506"
-                cy="275"
-                rx="195"
-                ry="98"
-                fill="none"
-                stroke="#ffaa22"
-                strokeWidth="1"
-                strokeDasharray="6 14"
-                filter="url(#amber-glow-intense)"
-                className="spin-ccw"
-              />
-            </g>
-
-            {/* Vertical Data Beams */}
-            <g className="neon-vertical-beams" opacity={neonActive ? '0.75' : '0.15'}>
-              <line x1="506" y1="242" x2="506" y2="15" stroke="url(#grad-beam-cyan)" strokeWidth="3" filter="url(#cyan-glow-intense)" />
-              <line x1="280" y1="130" x2="280" y2="15" stroke="url(#grad-beam-cyan)" strokeWidth="2.5" filter="url(#cyan-glow-intense)" />
-              <line x1="774" y1="172" x2="774" y2="15" stroke="url(#grad-beam-amber)" strokeWidth="2.5" filter="url(#amber-glow-intense)" />
-            </g>
-
-            {/* 1. FRONTEND CONDUIT (Cyan, Top-Left) */}
-            <g
-              className={`neon-conduit-group ${activeNode?.id === 'frontend' ? 'is-focused' : ''} ${activeNode && activeNode.id !== 'frontend' ? 'is-dimmed' : ''}`}
-            >
-              {/* Outer Bloom */}
-              <path
-                d="M 450 222 C 400 206, 350 185, 298 165"
-                fill="none"
-                stroke="#00f5d4"
-                strokeWidth="6"
-                filter="url(#cyan-glow-intense)"
-                opacity="0.65"
-              />
-              {/* Neon Tube Core */}
-              <path
-                d="M 450 222 C 400 206, 350 185, 298 165"
-                fill="none"
-                stroke="url(#grad-conduit-fe)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              {/* Pulsing White Laser Fiber */}
-              <path
-                d="M 450 222 C 400 206, 350 185, 298 165"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                opacity="0.95"
-              />
-              {/* Animated Data Packets Flowing to Frontend */}
-              {neonActive && (
-                <path
-                  d="M 450 222 C 400 206, 350 185, 298 165"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2.8"
-                  strokeDasharray="8 20"
-                  className="conduit-data-flow reverse-flow"
-                />
-              )}
-            </g>
-
-            {/* 2. BACKEND CONDUIT (Amber, Top-Right) */}
-            <g
-              className={`neon-conduit-group ${activeNode?.id === 'backend' ? 'is-focused' : ''} ${activeNode && activeNode.id !== 'backend' ? 'is-dimmed' : ''}`}
-            >
-              {/* Outer Bloom */}
-              <path
-                d="M 560 274 C 625 268, 680 250, 742 216"
-                fill="none"
-                stroke="#ffaa22"
-                strokeWidth="6"
-                filter="url(#amber-glow-intense)"
-                opacity="0.65"
-              />
-              {/* Neon Tube Core */}
-              <path
-                d="M 560 274 C 625 268, 680 250, 742 216"
-                fill="none"
-                stroke="url(#grad-conduit-be)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              {/* Pulsing White Laser Fiber */}
-              <path
-                d="M 560 274 C 625 268, 680 250, 742 216"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                opacity="0.95"
-              />
-              {/* Animated Data Packets Flowing to Backend */}
-              {neonActive && (
-                <path
-                  d="M 560 274 C 625 268, 680 250, 742 216"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2.8"
-                  strokeDasharray="8 20"
-                  className="conduit-data-flow"
-                />
-              )}
-            </g>
-
-            {/* 3. INFRASTRUCTURE CONDUIT (Amber, Bottom-Left) */}
-            <g
-              className={`neon-conduit-group ${activeNode?.id === 'infra' ? 'is-focused' : ''} ${activeNode && activeNode.id !== 'infra' ? 'is-dimmed' : ''}`}
-            >
-              {/* Outer Bloom */}
-              <path
-                d="M 455 298 C 405 328, 345 358, 270 365"
-                fill="none"
-                stroke="#ff9e2c"
-                strokeWidth="6"
-                filter="url(#amber-glow-intense)"
-                opacity="0.65"
-              />
-              {/* Neon Tube Core */}
-              <path
-                d="M 455 298 C 405 328, 345 358, 270 365"
-                fill="none"
-                stroke="url(#grad-conduit-infra)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              {/* Pulsing White Laser Fiber */}
-              <path
-                d="M 455 298 C 405 328, 345 358, 270 365"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                opacity="0.95"
-              />
-              {/* Animated Data Packets Flowing to Infra */}
-              {neonActive && (
-                <path
-                  d="M 455 298 C 405 328, 345 358, 270 365"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2.8"
-                  strokeDasharray="8 20"
-                  className="conduit-data-flow reverse-flow"
-                />
-              )}
-            </g>
-
-            {/* 4. DATA CONDUIT (Cyan, Bottom-Right) */}
-            <g
-              className={`neon-conduit-group ${activeNode?.id === 'data' ? 'is-focused' : ''} ${activeNode && activeNode.id !== 'data' ? 'is-dimmed' : ''}`}
-            >
-              {/* Outer Bloom */}
-              <path
-                d="M 560 318 C 615 345, 680 378, 755 416"
-                fill="none"
-                stroke="#26e8db"
-                strokeWidth="6"
-                filter="url(#cyan-glow-intense)"
-                opacity="0.65"
-              />
-              {/* Neon Tube Core */}
-              <path
-                d="M 560 318 C 615 345, 680 378, 755 416"
-                fill="none"
-                stroke="url(#grad-conduit-data)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              {/* Pulsing White Laser Fiber */}
-              <path
-                d="M 560 318 C 615 345, 680 378, 755 416"
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                opacity="0.95"
-              />
-              {/* Animated Data Packets Flowing to Data */}
-              {neonActive && (
-                <path
-                  d="M 560 318 C 615 345, 680 378, 755 416"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2.8"
-                  strokeDasharray="8 20"
-                  className="conduit-data-flow"
-                />
-              )}
-            </g>
-          </svg>
-
-          {/* Interactive Hotspot Targets on All 5 Nodes */}
-          {SYSTEM_NODES.map((node) => {
-            const isSelected = activeNodeId === node.id;
-            const isHighlighted = activeNode?.id === node.id;
-
-            return (
-              <div
-                key={node.id}
-                data-node={node.id}
-                className={`cyber-hotspot-pin ${node.color} ${isHighlighted ? 'active' : ''}`}
-                style={{
-                  left: `${node.xPercent}%`,
-                  top: `${node.yPercent}%`,
-                }}
-              >
-                {/* Clickable Target Button */}
-                <button
-                  type="button"
-                  className="cyber-hotspot-trigger"
-                  onClick={() => selectNode(node.id)}
-                  aria-label={`Inspect ${node.number} ${node.name} (${node.subTitle})`}
-                  aria-pressed={isSelected}
-                >
-                  <span className="cyber-hotspot-radar" />
-                  <span className="cyber-hotspot-reticle" />
-                  <span className="cyber-hotspot-dot" />
-                  <span className="cyber-hotspot-tag">{node.badgeLabel}</span>
-                </button>
-              </div>
-            );
-          })}
+        <div ref={depthRef} className="cyber-core-viewport" onPointerMove={event => {
+          if (event.pointerType !== 'mouse' || selection && !selection.arrived || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          const bounds = event.currentTarget.getBoundingClientRect();
+          updateDepth((event.clientX - bounds.left) / bounds.width * 2 - 1, (event.clientY - bounds.top) / bounds.height * 2 - 1);
+        }} onPointerLeave={() => { if (!selection || selection.arrived) updateDepth(0, 0); }}>
+          <NanoCircuitBackdrop />
+          <div className="cyber-depth-rig">
+            <svg className="cyber-module-connections" viewBox="0 0 1000 760" preserveAspectRatio="none" aria-hidden="true">
+              {SYSTEM_NODES.filter(node => node.id !== 'core').map(node => {
+                const x = node.xPercent * 10;
+                const y = node.yPercent * 7.6;
+                const path = `M 500 372 C 500 ${y} ${x} 372 ${x} ${y}`;
+                return <g key={node.id} className={`cyber-connection ${litNodeId && litNodeId !== 'core' && litNodeId !== node.id ? 'is-dimmed' : ''}`}
+                  style={{ color: node.hexColor }}>
+                  <path d={path} strokeWidth="9" opacity="0.1" />
+                  <path d={path} strokeWidth="1.5" opacity="0.85" />
+                  <path d={path} pathLength="1" className="cyber-connection-packet" strokeWidth="3" strokeDasharray="0.05 0.95" />
+                  <circle cx={x} cy={y} r="4" fill="currentColor" />
+                </g>;
+              })}
+            </svg>
+            {SYSTEM_NODES.map(node => (
+              <button key={node.id} type="button" data-node={node.id}
+                className={`cyber-module ${node.color} ${node.id === 'core' ? 'is-core' : ''} ${activeNodeId === node.id ? 'is-selected' : ''}`}
+                style={{ left: `${node.xPercent}%`, top: `${node.yPercent}%`, '--module-color': node.hexColor } as React.CSSProperties}
+                title={`${node.name} — ${node.subTitle}. Click to inspect.`}
+                aria-pressed={activeNodeId === node.id} aria-controls="hero-module-detail"
+                onClick={() => selectNode(node.id)}
+                onPointerEnter={event => { if (event.pointerType === 'mouse') setHighlightedId(node.id); }}
+                onPointerLeave={() => setHighlightedId(null)}
+                onFocus={() => setHighlightedId(node.id)} onBlur={() => setHighlightedId(null)}>
+                <span className="cyber-module-socket" aria-hidden="true" />
+                <picture className="cyber-module-art">
+                  <source type="image/avif" srcSet={`./hero-modules/${node.id}-384.avif 384w, ./hero-modules/${node.id}.avif 768w`}
+                    sizes={MODULE_SIZES[node.id === 'core' ? 'core' : 'other']} />
+                  <source type="image/webp" srcSet={`./hero-modules/${node.id}-384.webp 384w, ./hero-modules/${node.id}.webp 768w`}
+                    sizes={MODULE_SIZES[node.id === 'core' ? 'core' : 'other']} />
+                  <img src={`./hero-modules/${node.id}.webp`} width="768" height="768" alt=""
+                    loading="eager" fetchPriority={node.id === 'core' ? 'high' : 'auto'} decoding="async" draggable={false}
+                    onLoad={event => event.currentTarget.closest<HTMLButtonElement>('.cyber-module')?.style.setProperty('--module-texture', `url("${event.currentTarget.currentSrc}")`)} />
+                </picture>
+                <span className="cyber-module-label">
+                  <span className="cyber-module-number">{node.number}</span>{' '}
+                  <strong>{node.name}</strong>
+                  <span className="cyber-module-indicator" aria-hidden="true">{activeNodeId === node.id ? '●' : '+'}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <span className="cyber-depth-label">NANO FABRIC / FIVE CONNECTED MODULES</span>
+          <span className="cyber-scene-hint">HOVER TO ILLUMINATE · CLICK TO INSPECT</span>
         </div>
 
-        {/* Bottom Telemetry & Control Bar */}
         <div className="cyber-core-footer">
-          {/* Active Node Narrative Specs */}
-          <div className="cyber-footer-readout">
-            {SYSTEM_NODES.map((activeNode) => (
-              <div key={activeNode.id} className="cyber-node-readout" aria-hidden={activeNode.id !== activeNodeId}>
-                <div className="cyber-readout-head">
-                  <span className={`cyber-readout-pill ${activeNode.color}`}>
-                    {activeNode.number} // {activeNode.name}
-                  </span>
-                  <span className="cyber-readout-sub">{activeNode.subTitle}</span>
-                </div>
-                <p className="cyber-readout-desc">{activeNode.description}</p>
-                <div className="cyber-readout-specs">
-                  {activeNode.specs.map((spec) => (
-                    <span key={spec} className="cyber-spec-item">
-                      <CheckCircle2 size={12} color={activeNode.hexColor} />
-                      <span>{spec}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-              <div className="cyber-default-readout" aria-hidden={!!activeNode}>
-                <span className="cyber-readout-eyebrow">KT / ARCHITECTURE EXHIBIT</span>
-                <strong>Interconnected Fullstack Substrates</strong>
-                <p>
-                  5 high-concurrency systems connected by real-time neon LED conduits. Click a node to trace its signal to the detail banner.
-                </p>
-              </div>
-          </div>
-
-          {/* Action Tools */}
           <div className="cyber-footer-actions">
-            {/* Toggle Neon Stream */}
-            <button
-              type="button"
-              className={`cyber-action-btn ${neonActive ? 'active' : ''}`}
-              onClick={() => setNeonActive((prev) => !prev)}
-              aria-pressed={neonActive}
-              title={neonActive ? 'Tắt hiệu ứng luồng LED Neon' : 'Bật hiệu ứng luồng LED Neon'}
-            >
-              <Zap size={14} />
-              <span>{neonActive ? 'LED Neon: ON' : 'LED Neon: OFF'}</span>
+            <button type="button" className={`cyber-action-btn ${neonActive ? 'active' : ''}`}
+              onClick={() => {
+                if (neonActive) setSelection(current => current ? { ...current, arrived: true } : null);
+                setNeonActive(value => !value);
+              }} aria-pressed={neonActive}>
+              <Zap size={14} /><span>{neonActive ? 'LED Neon: ON' : 'LED Neon: OFF'}</span>
             </button>
-
-            {/* Reset */}
-            <button
-              type="button"
-              className="cyber-action-btn"
-              onClick={resetView}
-              title="Đặt lại góc nhìn ban đầu"
-            >
-              <RotateCcw size={14} />
-              <span>Reset</span>
+            <button type="button" className="cyber-action-btn" onClick={resetView}>
+              <RotateCcw size={14} /><span>Reset</span>
             </button>
           </div>
         </div>
       </div>
-
-      {activeNode && signalPath && (
-        <svg key={activeNode.id} className="cyber-node-signal" aria-hidden="true">
-          <path d={signalPath} pathLength="1" className="cyber-node-signal-trace" style={{ stroke: activeNode.hexColor, color: activeNode.hexColor }} />
-          <path d={signalPath} pathLength="1" className="cyber-node-signal-packet" />
-        </svg>
-      )}
-      <div className="cyber-banner-rail">
-      {activeNode ? (
-        <div key={activeNode.id} ref={hudRef} className={`cyber-hud-card cyber-external-banner ${activeNode.color}`} aria-live="polite">
-          <div className="cyber-hud-header">
-            <span className="cyber-hud-badge">NODE {activeNode.number} // {activeNode.category}</span>
-            <span className="cyber-hud-dot" />
-          </div>
-          <div className="cyber-hud-title">{activeNode.name}</div>
-          <div className="cyber-hud-sub">{activeNode.subTitle}</div>
-
-          <div className="cyber-hud-techs">
-            {activeNode.technologies.map((tech) => (
-              <span key={tech} className="cyber-hud-tag">
-                {tech}
-              </span>
+      <aside className="cyber-module-inspector" aria-label="Module information" data-open={Boolean(selection?.arrived)}
+        style={{ '--module-color': selectedNode?.hexColor ?? '#38efd8' } as React.CSSProperties}>
+        <span ref={dockRef} className="cyber-inspector-port" aria-hidden="true" />
+          <div id="hero-module-detail" className="cyber-footer-readout" aria-live="polite" aria-atomic="true"
+            aria-busy={selection !== null && !selection.arrived}>
+            {SYSTEM_NODES.filter(node => node.id === activeNodeId).map(node => (
+              <div key={`${node.id}:${selection?.run}`} className="cyber-node-readout cyber-selection-banner" data-selected-module={node.id}
+                aria-hidden={!selection?.arrived}
+                style={{ '--module-color': node.hexColor } as React.CSSProperties}>
+                <button type="button" className="cyber-inspector-close" onClick={resetView} aria-label="Close module information"><X size={16} /></button>
+                <span className="cyber-readout-eyebrow">{node.category}</span>
+                <div className="cyber-readout-head">
+                  <span className={`cyber-readout-pill ${node.color}`}>{node.number} // {node.name}</span>
+                  <span className="cyber-readout-sub">{node.subTitle}</span>
+                </div>
+                <p className="cyber-readout-desc">{node.description}</p>
+                <div className="cyber-readout-techs">{node.technologies.map(tech => <span key={tech}>{tech}</span>)}</div>
+                <div className="cyber-readout-specs">{node.specs.map(spec => (
+                  <span key={spec} className="cyber-spec-item"><CheckCircle2 size={12} color={node.hexColor} />{spec}</span>
+                ))}</div>
+                <a href={node.targetChapter} className="cyber-readout-link">Inspect in Exhibit <ExternalLink size={12} /></a>
+              </div>
             ))}
+            {selectedNode && !selection?.arrived && <p className="cyber-link-pending">Connecting to {selectedNode.name}…</p>}
+            {activeNodeId === null && <div className="cyber-default-readout">
+              <span className="cyber-readout-eyebrow">KT / ARCHITECTURE EXHIBIT</span>
+              <strong>One machine. Five connected disciplines.</strong>
+              <p>Explore the modules behind the work: interfaces, services, infrastructure and data, connected through the system core.</p>
+              <p className="cyber-readout-instruction">Select a module to inspect its role, technologies and engineering decisions.</p>
+            </div>}
           </div>
-
-          <div className="cyber-hud-footer">
-            <a href={activeNode.targetChapter} className="cyber-hud-link">
-              <span>Inspect in Exhibit</span>
-              <ExternalLink size={11} />
-            </a>
-          </div>
-        </div>
-      ) : <p className="cyber-banner-hint">SELECT A NODE // FOLLOW THE SIGNAL</p>}
-      </div>
-      </div>
-
-    </>
+      </aside>
+      {selectedNode && selection && signalPath && <React.Fragment key={`${selectedNode.id}:${selection.run}`}>
+        <svg className={`cyber-selection-route ${selection.arrived ? 'is-complete' : ''}`} aria-hidden="true">
+          <g className="cyber-connection cyber-selection-signal" data-signal-node={selectedNode.id} style={{ color: selectedNode.hexColor }}>
+            <path d={signalPath} strokeWidth="1" opacity="0.15" />
+            <path d={signalPath} pathLength="1" className="cyber-selection-draw" strokeWidth="2" />
+          </g>
+        </svg>
+        <span className={`cyber-selection-head ${selection.arrived ? 'is-complete' : ''}`} aria-hidden="true"
+          style={{ offsetPath: `path("${signalPath}")`, color: selectedNode.hexColor }}
+          onAnimationEnd={event => {
+            if (event.animationName !== 'hero-led-flight') return;
+            setSelection(current => current?.nodeId === selectedNode.id && current.run === selection.run
+              ? { ...current, arrived: true } : current);
+          }} />
+      </React.Fragment>}
+    </div>
   );
 };
 

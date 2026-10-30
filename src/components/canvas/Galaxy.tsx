@@ -5,23 +5,9 @@ import * as THREE from 'three';
 import type { JourneyMotion } from '../../data/architectureJourney';
 
 export const RGB_COLORS = {
-  light: ['#b3204c', '#087342', '#244fc0'],
-  dark: ['#ff527e', '#50efab', '#739eff'],
+  light: ['#b85b0f', '#087342', '#244fc0'],
+  dark: ['#ff842e', '#50efab', '#739eff'],
 };
-
-export function Text({ children, position, color, fontSize }: { children: string; position: [number, number, number]; color: string; fontSize: number; anchorX?: string }) {
-  const texture = useMemo(() => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024; canvas.height = 128;
-    const ctx = canvas.getContext('2d')!;
-    ctx.font = '500 48px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = color; ctx.fillText(children, 512, 64);
-    const map = new THREE.CanvasTexture(canvas); map.colorSpace = THREE.SRGBColorSpace;
-    return map;
-  }, [children, color]);
-  useEffect(() => () => texture.dispose(), [texture]);
-  return <sprite position={position} scale={[fontSize * 21.33, fontSize * 2.67, 1]}><spriteMaterial map={texture} transparent depthWrite={false} toneMapped={false} /></sprite>;
-}
 
 export function Galaxy({ theme }: { theme: 'light' | 'dark' }) {
   const geometry = useMemo(() => {
@@ -29,7 +15,7 @@ export function Galaxy({ theme }: { theme: 'light' | 'dark' }) {
     const colors: number[] = [];
     let seed = 71;
     const random = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-    for (let i = 0; i < 3600; i++) {
+    for (let i = 0; i < 1600; i++) {
       const radius = 15 + random() * 105;
       const angle = random() * Math.PI * 2;
       positions.push(Math.cos(angle) * radius, (random() - 0.5) * 100, -45 + Math.sin(angle) * radius);
@@ -42,7 +28,7 @@ export function Galaxy({ theme }: { theme: 'light' | 'dark' }) {
   return <group>
     {[0, 1, 2].map(layer => <mesh key={layer} position={[-15 + layer * 18, 10 - layer * 8, -105 + layer * 27]} rotation={[0, 0, -0.38 + layer * 0.2]} renderOrder={-3 + layer}>
       <planeGeometry args={[220 - layer * 45, 120 - layer * 25]} />
-      <shaderMaterial transparent depthWrite={false} uniforms={{ tint: { value: new THREE.Color(theme === 'light' ? ['#787bb8', '#75b3c1', '#a9a0cf'][layer] : ['#403c86', '#145773', '#77509a'][layer]) }, strength: { value: theme === 'light' ? 0.28 : 0.6 } }}
+      <shaderMaterial transparent depthWrite={false} uniforms={{ tint: { value: new THREE.Color(theme === 'light' ? ['#787bb8', '#75b3c1', '#a9a0cf'][layer] : ['#403c86', '#145773', '#77509a'][layer]) }, strength: { value: theme === 'light' ? 0.12 : 0.35 } }}
         vertexShader={`varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`}
         fragmentShader={`varying vec2 vUv; uniform vec3 tint; uniform float strength;
           float noise(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -52,9 +38,9 @@ export function Galaxy({ theme }: { theme: 'light' | 'dark' }) {
           float fade=1.-smoothstep(.2,1.,length(p)); gl_FragColor=vec4(tint,band*dust*fade*strength);}`}/>
     </mesh>)}
     <points geometry={geometry}>
-      <shaderMaterial transparent depthWrite={false} vertexColors uniforms={{ tint: { value: new THREE.Color(theme === 'light' ? '#334a85' : '#d1e3ff') } }}
-        vertexShader={`varying vec3 vColor; void main(){vColor=color; vec4 p=modelViewMatrix*vec4(position,1.); gl_Position=projectionMatrix*p;gl_PointSize=clamp(145./max(1.,-p.z),1.6,4.);}`}
-        fragmentShader={`varying vec3 vColor; uniform vec3 tint; void main(){float d=length(gl_PointCoord-.5);float a=1.-smoothstep(.12,.5,d);gl_FragColor=vec4(tint*vColor,a*.85);}`} />
+      <shaderMaterial transparent depthWrite={false} vertexColors uniforms={{ tint: { value: new THREE.Color(theme === 'light' ? '#506680' : '#d1e3ff') }, strength: { value: theme === 'light' ? 0.36 : 0.7 } }}
+        vertexShader={`varying vec3 vColor; void main(){vColor=color; vec4 p=modelViewMatrix*vec4(position,1.); gl_Position=projectionMatrix*p;gl_PointSize=clamp(110./max(1.,-p.z),1.1,2.6);}`}
+        fragmentShader={`varying vec3 vColor; uniform vec3 tint; uniform float strength; void main(){float d=length(gl_PointCoord-.5);float a=1.-smoothstep(.12,.5,d);gl_FragColor=vec4(tint*vColor,a*strength);}`} />
     </points>
   </group>;
 }
@@ -64,7 +50,6 @@ function orbitPoint(radius: number, angle: number) {
 }
 export const LOGIC_POSITIONS = [[0, 0, 0], orbitPoint(2.3, 3.8).toArray(), orbitPoint(1.45, 0.5).toArray()] as [number, number, number][];
 const LOCATIONS = LOGIC_POSITIONS;
-const LABELS = ['STORE', 'EFFECT', 'REDUCER'];
 const IDS = ['state', 'effects', 'rules'];
 
 // Shared linear texture: directional machining marks, not a painted color layer.
@@ -118,7 +103,7 @@ export function LogicSculpture({ theme, motion, reducedMotion, active, onInspect
   const ink = theme === 'light' ? '#28406a' : '#d9e8ff';
   const colors = RGB_COLORS[theme];
   const metal = '#8c969d';
-  const titanium = theme === 'light' ? '#27313b' : '#313d47';
+  const titanium = theme === 'light' ? '#485762' : '#46545f';
   return <group ref={root} rotation={[-0.12, -0.1, 0.025]}>
     {paths.map(({ geometry }, i) => <group key={i}>
       <mesh geometry={geometry}><meshBasicMaterial color={ink} transparent opacity={theme === 'light' ? 0.35 : 0.25} /></mesh>
@@ -126,7 +111,7 @@ export function LogicSculpture({ theme, motion, reducedMotion, active, onInspect
         <sphereGeometry args={[0.09, 20, 12]} /><meshStandardMaterial color={colors[i + 1]} metalness={0.3} roughness={0.25} />
       </mesh>
     </group>)}
-    {LOCATIONS.map((position, i) => <group key={IDS[i]} position={position}
+    {LOCATIONS.map((position, i) => <group key={IDS[i]} name={`module:${IDS[i]}`} position={position}
       onClick={e => { e.stopPropagation(); if (e.delta <= 5) onInspect(1, IDS[i]); }}
       onPointerOver={e => { e.stopPropagation(); motion.current.hoveredNode = IDS[i]; motion.current.interactionAt = performance.now(); (e.nativeEvent.target as HTMLElement).style.cursor = 'pointer'; }}
       onPointerOut={e => { motion.current.hoveredNode = null; (e.nativeEvent.target as HTMLElement).style.cursor = ''; }}>
@@ -146,7 +131,6 @@ export function LogicSculpture({ theme, motion, reducedMotion, active, onInspect
         <mesh rotation={[0.2, Math.PI / 2, 0.1]}><torusGeometry args={[0.61, 0.018, 8, 80]} /><meshStandardMaterial color={metal} metalness={0.6} roughness={0.3} /></mesh>
       </>}
       {i === 2 && <mesh rotation={[0, 0, Math.PI / 4]}><torusGeometry args={[0.48, 0.025, 8, 4]} /><meshStandardMaterial color={metal} metalness={0.7} roughness={0.3} /></mesh>}
-      <Text position={[0, i === 0 ? -0.88 : -0.62, 0.25]} fontSize={0.16} color={colors[i]} anchorX="center">{LABELS[i]}</Text>
     </group>)}
   </group>;
 }

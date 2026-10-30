@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { JOURNEY_NODES } from '../../data/architectureJourney';
 import type { JourneyMotion, JourneyPoint } from '../../data/architectureJourney';
-import { LOGIC_POSITIONS, Text, titaniumFinish, RGB_COLORS } from './Galaxy';
+import { LOGIC_POSITIONS, titaniumFinish, RGB_COLORS } from './Galaxy';
 
 export const SCULPTURE_POSITIONS: JourneyPoint[][] = [
   [[0, 0.25, 0], [-1.65, -0.65, 0.4], [1.65, -0.3, -0.2]],
@@ -139,8 +139,6 @@ function System({ node, f, rotor }: { node: number; f: Finish; rotor: MutableRef
   </group>;
 }
 
-const LABELS = [['COMPONENT TREE', 'INPUT / FEEDBACK', 'KEYBOARD / A11Y'], [], ['API / CONTRACT', 'MQTT BROKER', 'PARTNER ADAPTER'], ['POSTGRES / TX', 'REDIS CACHE', 'COMMIT / EVENTS'], ['LOCAL SNAPSHOT', 'SCANNER / GATE', 'REPLAY / SYNC']];
-
 export function ArchitectureSculpture({ index, theme, motion, active, reducedMotion, onInspect }: {
   index: number; theme: 'light' | 'dark'; motion: MutableRefObject<JourneyMotion>; active: boolean; reducedMotion: boolean;
   onInspect: (board: number, node: string) => void;
@@ -162,7 +160,7 @@ export function ArchitectureSculpture({ index, theme, motion, active, reducedMot
   const f = useMemo(() => {
     return {
       texture,
-      body: new THREE.MeshPhysicalMaterial({ color: theme === 'light' ? '#273039' : '#34404a', metalness: 0.88, roughness: 0.3, roughnessMap: texture, bumpMap: texture, bumpScale: 0.008, envMapIntensity: 2, clearcoat: 0.2, clearcoatRoughness: 0.24 }),
+      body: new THREE.MeshPhysicalMaterial({ color: theme === 'light' ? '#485762' : '#46545f', metalness: 0.88, roughness: 0.32, roughnessMap: texture, bumpMap: texture, bumpScale: 0.008, envMapIntensity: 2, clearcoat: 0.2, clearcoatRoughness: 0.24 }),
       trim: new THREE.MeshStandardMaterial({ color: '#93999c', metalness: 0.95, roughness: 0.21, envMapIntensity: 1.6 }),
       leds: RGB_COLORS[theme].map(color => new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: theme === 'light' ? 0.7 : 1.6, toneMapped: false })),
       inset: new THREE.MeshStandardMaterial({ color: '#080f17', metalness: 0.35, roughness: 0.24 }),
@@ -171,6 +169,10 @@ export function ArchitectureSculpture({ index, theme, motion, active, reducedMot
   useEffect(() => () => { f.body.dispose(); f.trim.dispose(); f.leds.forEach(material => material.dispose()); f.inset.dispose(); }, [f]);
   useFrame((_, delta) => {
     if (!active || document.hidden || !root.current?.parent?.visible) return;
+    f.leds.forEach((material, i) => {
+      const selected = motion.current.selectedNode === JOURNEY_NODES[index][i].id || motion.current.hoveredNode === JOURNEY_NODES[index][i].id;
+      material.emissiveIntensity = (theme === 'light' ? 0.7 : 1.6) * (selected ? 2 : 1);
+    });
     if (reducedMotion) return;
     time.current += Math.min(delta, 0.05) * 0.25;
     const angle = time.current + motion.current.progress * 2;
@@ -188,12 +190,11 @@ export function ArchitectureSculpture({ index, theme, motion, active, reducedMot
       else if (index === 2) content = <Bridge node={i} f={nodeFinish} />;
       else if (index === 3) content = <Persistence node={i} f={nodeFinish} />;
       else content = <System node={i} f={nodeFinish} rotor={rotor} />;
-      return <group key={node.id} position={SCULPTURE_POSITIONS[index][i]}
+      return <group key={node.id} name={`module:${node.id}`} position={SCULPTURE_POSITIONS[index][i]}
         onClick={e => { e.stopPropagation(); if (e.delta <= 5) onInspect(index, node.id); }}
         onPointerOver={e => { e.stopPropagation(); motion.current.hoveredNode = node.id; motion.current.interactionAt = performance.now(); (e.nativeEvent.target as HTMLElement).style.cursor = 'pointer'; }}
         onPointerOut={e => { motion.current.hoveredNode = null; (e.nativeEvent.target as HTMLElement).style.cursor = ''; }}>
         {content}
-        <Text position={[0, i === (index === 4 ? 1 : 0) ? -1.25 : -0.78, 0.4]} fontSize={0.13} color={RGB_COLORS[theme][i]}>{LABELS[index][i]}</Text>
       </group>;
     })}
   </group>;
